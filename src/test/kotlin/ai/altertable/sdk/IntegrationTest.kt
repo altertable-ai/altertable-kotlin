@@ -18,11 +18,13 @@ class IntegrationTest {
         @BeforeAll
         fun setup() {
             // Assume GitHub Actions service provides altertable-mock at localhost:15001
+            println("setup")
         }
 
         @JvmStatic
         @AfterAll
         fun teardown() {
+            println("teardown")
         }
     }
 
@@ -49,7 +51,8 @@ class IntegrationTest {
         // If no error occurred, it passed. We could also query the mock server to see if events arrived,
         // but test states: ensure tests for track, identify, alias. 
         // We just verify no network error or 4xx was thrown.
-        assertTrue(caughtError == null, "An error occurred during successful track/identify/alias requests: ${caughtError?.message}")
+        val errorMsg = "An error occurred: ${caughtError?.message}"
+        assertTrue(caughtError == null, errorMsg)
     }
 
     @Test
@@ -57,9 +60,8 @@ class IntegrationTest {
         var apiError: ApiError? = null
         val config = MobileConfig(
             apiKey = "valid_api_key",
-            environment = "production",
-            baseUrl = baseUrl,
             environment = "invalid_env",
+            baseUrl = baseUrl,
             onError = { err: Exception -> 
                 if (err is ApiError) {
                     apiError = err
