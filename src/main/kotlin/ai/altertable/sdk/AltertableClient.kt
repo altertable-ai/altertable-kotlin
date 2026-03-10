@@ -6,7 +6,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 
-class AltertableClient(var config: MobileConfig) {
+class AltertableClient(var config: AltertableConfig) {
     val storage: StorageApi
     val identityManager: IdentityManager
     val sessionManager: SessionManager
@@ -22,7 +22,7 @@ class AltertableClient(var config: MobileConfig) {
         transport = Transport(config)
     }
 
-    fun configure(updates: MobileConfig) {
+    fun configure(updates: AltertableConfig) {
         val oldConsent = config.trackingConsent
         config = updates
         if (oldConsent != config.trackingConsent && config.trackingConsent == TrackingConsentState.GRANTED) {
@@ -111,7 +111,7 @@ class AltertableClient(var config: MobileConfig) {
     companion object {
         private var instance: AltertableClient? = null
 
-        fun setup(config: MobileConfig): AltertableClient {
+        fun setup(config: AltertableConfig): AltertableClient {
             return AltertableClient(config).also { instance = it }
         }
 

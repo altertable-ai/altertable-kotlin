@@ -22,7 +22,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
 class Transport(
-    private val config: MobileConfig
+    private val config: AltertableConfig
 ) {
     private val client = HttpClient(OkHttp) {
         install(HttpTimeout)

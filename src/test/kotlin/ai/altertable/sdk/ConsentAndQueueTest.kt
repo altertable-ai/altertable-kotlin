@@ -12,7 +12,7 @@ class ConsentAndQueueTest {
     @Test
     @Suppress("UnusedPrivateProperty", "UNUSED_VARIABLE")
     fun `test event queue buffering and flush on consent granted`() = runBlocking {
-        val config = MobileConfig(apiKey = "test-key", trackingConsent = TrackingConsentState.PENDING)
+        val config = AltertableConfig(apiKey = "test-key", trackingConsent = TrackingConsentState.PENDING)
         val client = AltertableClient(config)
         
         // Track an event while pending
@@ -52,7 +52,7 @@ class ConsentAndQueueTest {
 
     @Test
     fun `test events are dropped when consent is denied`() = runBlocking {
-        val config = MobileConfig(apiKey = "test-key", trackingConsent = TrackingConsentState.DENIED)
+        val config = AltertableConfig(apiKey = "test-key", trackingConsent = TrackingConsentState.DENIED)
         val client = AltertableClient(config)
         
         client.track("TestEvent")
@@ -64,7 +64,7 @@ class ConsentAndQueueTest {
 
     @Test
     fun `test transport construction with config`() {
-        val config = MobileConfig(apiKey = "test-key", baseUrl = "https://example.com")
+        val config = AltertableConfig(apiKey = "test-key", baseUrl = "https://example.com")
         val transport = Transport(config)
         assertNotNull(transport)
     }
