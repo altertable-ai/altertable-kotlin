@@ -4,6 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import java.io.File
 
 /**
  * Main entry point for interacting with the Altertable API.
@@ -11,8 +13,13 @@ import kotlinx.coroutines.launch
  * Provides methods for identifying users, tracking events, and managing session state.
  *
  * @param config The [AltertableConfig] instance used to initialize the client.
+ * @param cacheDir An optional [File] representing the cache directory for queue storage.
  */
-class AltertableClient(var config: AltertableConfig) {
+@Suppress("TooManyFunctions")
+class AltertableClient(
+    var config: AltertableConfig,
+    private val cacheDir: File? = null
+) {
     /** The storage implementation used by this client. */
     val storage: StorageApi
     /** The identity manager handling user identities. */
@@ -24,13 +31,20 @@ class AltertableClient(var config: AltertableConfig) {
     /** The transport layer used to send requests to the Altertable API. */
     val transport: Transport
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
 
     init {
         storage = InMemoryStorage()
         identityManager = IdentityManager(storage, config.apiKey, config.environment)
         sessionManager = SessionManager(storage, config.apiKey, config.environment)
-        eventQueue = EventQueue(Constants.MAX_QUEUE_SIZE)
+        
+        val queueStorage = cacheDir?.let { QueueStorage(it) }
+        eventQueue = EventQueue(Constants.MAX_QUEUE_SIZE, queueStorage)
         transport = Transport(config)
+
+        scope.launch {
+            eventQueue.loadFromDisk()
+        }
     }
 
     /**
@@ -43,10 +57,26 @@ class AltertableClient(var config: AltertableConfig) {
      */
     fun configure(updates: AltertableConfig) {
         val oldConsent = config.trackingConsent
-        config = updates
-        if (oldConsent != config.trackingConsent && config.trackingConsent == TrackingConsentState.GRANTED) {
-            scope.launch {
-                flushQueue()
+        
+        // Store init-only fields that cannot be changed
+        val frozenFlushOnBackground = config.flushOnBackground
+        
+        // Apply updates
+        config = updates.copy(flushOnBackground = frozenFlushOnBackground)
+        
+        if (oldConsent != config.trackingConsent) {
+            when (config.trackingConsent) {
+                TrackingConsentState.GRANTED -> {
+                    scope.launch {
+                        flushQueue()
+                    }
+                }
+                TrackingConsentState.DENIED -> {
+                    scope.launch {
+                        eventQueue.clear()
+                    }
+                }
+                else -> { /* no-op */ }
             }
         }
     }
@@ -64,8 +94,9 @@ class AltertableClient(var config: AltertableConfig) {
      * This links the current anonymous state to the known user identity.
      *
      * @param userId The unique identifier for the user.
+     * @param traits Optional properties to associate with the user identity.
      */
-    fun identify(userId: String) {
+    fun identify(userId: String, traits: Map<String, Any> = emptyMap()) {
         val oldDistinctId = identityManager.distinctId
         identityManager.identify(userId)
         val event = mutableMapOf<String, Any?>(
@@ -74,7 +105,7 @@ class AltertableClient(var config: AltertableConfig) {
             "device_id" to identityManager.deviceId,
             "distinct_id" to userId,
             "anonymous_id" to oldDistinctId,
-            "traits" to emptyMap<String, Any>()
+            "traits" to traits
         )
         enqueueOrSend("/identify", event)
     }
@@ -90,10 +121,30 @@ class AltertableClient(var config: AltertableConfig) {
             "environment" to config.environment,
             "device_id" to identityManager.deviceId,
             "distinct_id" to identityManager.distinctId,
-            "anonymous_id" to null,
+            "anonymous_id" to identityManager.anonymousId,
             "new_user_id" to newUserId
         )
         enqueueOrSend("/alias", event)
+    }
+
+    /**
+     * Updates traits for the currently identified user.
+     * 
+     * @param traits The properties to update.
+     */
+    fun updateTraits(traits: Map<String, Any>) {
+        if (identityManager.anonymousId == null) {
+            return
+        }
+        val event = mutableMapOf<String, Any?>(
+            "timestamp" to java.time.Instant.now().toString(),
+            "environment" to config.environment,
+            "device_id" to identityManager.deviceId,
+            "distinct_id" to identityManager.distinctId,
+            "anonymous_id" to identityManager.anonymousId,
+            "traits" to traits
+        )
+        enqueueOrSend("/identify", event)
     }
 
     /**
@@ -121,6 +172,10 @@ class AltertableClient(var config: AltertableConfig) {
         properties: Map<String, Any> = emptyMap()
     ) {
         sessionManager.getSessionIdAndTouch()
+        
+        val systemProperties = getSystemProperties()
+        val finalProperties = systemProperties + properties
+        
         val payload = mutableMapOf<String, Any?>(
             "timestamp" to java.time.Instant.now().toString(),
             "event" to event,
@@ -129,30 +184,78 @@ class AltertableClient(var config: AltertableConfig) {
             "distinct_id" to identityManager.distinctId,
             "anonymous_id" to identityManager.anonymousId,
             "session_id" to sessionManager.getSessionIdAndTouch(),
-            "properties" to properties
+            "properties" to finalProperties
         )
         enqueueOrSend("/track", payload)
     }
-    
+
+    private fun getSystemProperties(): Map<String, Any> {
+        val props = mutableMapOf<String, Any>()
+        
+        props["\$os"] = "Android"
+        
+        config.release?.let {
+            props["\$release"] = it
+        }
+
+        return props
+    }
+
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
     private fun enqueueOrSend(endpoint: String, payload: Map<String, Any?>) {
         val finalPayload = payload.toMutableMap()
         finalPayload["_endpoint"] = endpoint
         scope.launch {
             when (config.trackingConsent) {
-                TrackingConsentState.GRANTED -> transport.post(endpoint, payload)
+                TrackingConsentState.GRANTED -> {
+                    try {
+                        transport.post(endpoint, payload)
+                    } catch (e: Exception) {
+                        eventQueue.enqueue(finalPayload)
+                    }
+                }
                 TrackingConsentState.PENDING, TrackingConsentState.DISMISSED -> eventQueue.enqueue(finalPayload)
                 TrackingConsentState.DENIED -> { /* drop */ }
             }
         }
     }
-    
+
+    fun flush() {
+        scope.launch {
+            flushQueue()
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
     private suspend fun flushQueue() {
         val events = eventQueue.flush()
         for (evt in events) {
-            val endpoint = evt["_endpoint"] as? String ?: "/track"
-            val payload = evt.filterKeys { it != "_endpoint" }
-            transport.post(endpoint, payload)
+            try {
+                transport.postEvent(evt)
+            } catch (e: Exception) {
+                val payload = eventQueue.deserializePayload(evt.payloadJson)
+                val newPayload = payload.toMutableMap()
+                newPayload["_endpoint"] = evt.endpoint
+                eventQueue.enqueue(newPayload)
+            }
         }
+    }
+
+    private fun serializeToJsonElement(map: Map<String, Any?>): kotlinx.serialization.json.JsonElement {
+        val jsonMap = map.mapValues { (_, value) ->
+            when (value) {
+                is String -> kotlinx.serialization.json.JsonPrimitive(value)
+                is Number -> kotlinx.serialization.json.JsonPrimitive(value)
+                is Boolean -> kotlinx.serialization.json.JsonPrimitive(value)
+                is Map<*, *> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    serializeToJsonElement(value as Map<String, Any?>)
+                }
+                null -> kotlinx.serialization.json.JsonNull
+                else -> kotlinx.serialization.json.JsonPrimitive(value.toString())
+            }
+        }
+        return kotlinx.serialization.json.JsonObject(jsonMap)
     }
 
     companion object {
@@ -162,10 +265,11 @@ class AltertableClient(var config: AltertableConfig) {
          * Initializes and returns the shared [AltertableClient] instance.
          *
          * @param config The [AltertableConfig] to configure the client with.
+         * @param cacheDir An optional [File] representing the cache directory for queue storage.
          * @return The configured [AltertableClient] instance.
          */
-        fun setup(config: AltertableConfig): AltertableClient {
-            return AltertableClient(config).also { instance = it }
+        fun setup(config: AltertableConfig, cacheDir: File? = null): AltertableClient {
+            return AltertableClient(config, cacheDir).also { instance = it }
         }
 
         /**

@@ -1,11 +1,11 @@
 package ai.altertable.sdk
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import kotlinx.serialization.json.Json
 
 class ConsentAndQueueTest {
 
@@ -19,7 +19,7 @@ class ConsentAndQueueTest {
         client.track("TestEvent")
         
         // wait for Dispatchers.IO
-        var queueItems = emptyList<Map<String, Any?>>()
+        var queueItems = emptyList<QueuedEvent>()
         for (_i in 0 until 20) {
             queueItems = client.eventQueue.flush()
             if (queueItems.isNotEmpty()) break
@@ -27,15 +27,16 @@ class ConsentAndQueueTest {
         }
         
         assertEquals(1, queueItems.size)
-        assertEquals("/track", queueItems[0]["_endpoint"])
-        assertEquals("TestEvent", queueItems[0]["event"])
+        assertEquals("/track", queueItems[0].endpoint)
         
-        // Put it back
-        client.eventQueue.enqueue(queueItems[0])
+        // Put it back - need to convert back to the format expected by enqueue
+        val json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
+        val payloadJson = queueItems[0].payloadJson
+        val requeuePayload = client.eventQueue.deserializePayload(payloadJson).toMutableMap()
+        requeuePayload["_endpoint"] = queueItems[0].endpoint
+        client.eventQueue.enqueue(requeuePayload)
         
         // Now grant consent.
-        
-        
         client.configure(config.copy(trackingConsent = TrackingConsentState.GRANTED))
         
         for (_i in 0 until 20) {
@@ -43,7 +44,9 @@ class ConsentAndQueueTest {
             if (emptyQueue.isEmpty()) {
                 break
             }
-            client.eventQueue.enqueue(emptyQueue[0])
+            val requeuePayload2 = client.eventQueue.deserializePayload(emptyQueue[0].payloadJson).toMutableMap()
+            requeuePayload2["_endpoint"] = emptyQueue[0].endpoint
+            client.eventQueue.enqueue(requeuePayload2)
             delay(50)
         }
         val finalQueue = client.eventQueue.flush()
