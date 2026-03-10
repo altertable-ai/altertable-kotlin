@@ -48,7 +48,7 @@ class DataStoreStorage(
             runBlocking {
                 dataStore.data.map { preferences -> preferences[prefKey] }.first()
             }
-        } catch (e: Exception) {
+        } catch (@Suppress("TooGenericExceptionCaught", "SwallowedException") e: Exception) {
             null
         }
     }
