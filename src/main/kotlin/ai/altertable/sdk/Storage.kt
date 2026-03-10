@@ -41,7 +41,7 @@ class DataStoreStorage(
     private val dataStore: DataStore<Preferences>
 ) : StorageApi {
 
-    @Suppress("SwallowedException")
+    @Suppress("SwallowedException", "TooGenericExceptionCaught")
     override fun getItem(key: String): String? {
         val prefKey = stringPreferencesKey(key)
         return try {
@@ -76,9 +76,10 @@ class DataStoreStorage(
         val toKey = stringPreferencesKey(to)
         runBlocking {
             dataStore.edit { preferences ->
-                val value = preferences.remove(fromKey)
+                val value = preferences[fromKey]
                 if (value != null) {
                     preferences[toKey] = value
+                    preferences.remove(fromKey)
                 }
             }
         }
