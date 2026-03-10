@@ -6,6 +6,7 @@ import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.request.post
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -39,7 +40,7 @@ class Transport(
         try {
             val response = withContext(Dispatchers.IO) {
                 client.post("${config.baseUrl}$endpoint") {
-                    parameter("apiKey", config.apiKey)
+                    header("Authorization", "Bearer ${config.apiKey}")
                     parameter("environment", config.environment)
                     contentType(ContentType.Application.Json)
                     setBody(serialize(payload))

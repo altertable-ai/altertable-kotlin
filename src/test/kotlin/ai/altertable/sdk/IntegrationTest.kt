@@ -44,6 +44,7 @@ class IntegrationTest {
         client.identify("user_123")
         client.track("Item Viewed", mapOf("item_id" to "123"))
         client.alias("new_user_123")
+        client.eventQueue.flush()
 
         // Wait for coroutines
         delay(1000)
