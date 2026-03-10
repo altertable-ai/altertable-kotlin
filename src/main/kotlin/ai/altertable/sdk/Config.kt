@@ -7,7 +7,18 @@ enum class TrackingConsentState(val value: String) {
     DISMISSED("dismissed")
 }
 
-class AltertableError(message: String, cause: Throwable? = null) : Exception(message, cause)
+open class AltertableError(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+class ApiError(
+    val status: Int,
+    val statusText: String,
+    val errorCode: String?,
+    val details: Map<String, Any>?,
+    message: String,
+    cause: Throwable? = null
+) : AltertableError(message, cause)
+
+class NetworkError(message: String, cause: Throwable) : AltertableError(message, cause)
 
 data class MobileConfig(
     val apiKey: String,
