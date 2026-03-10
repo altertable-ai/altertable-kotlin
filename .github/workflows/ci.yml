@@ -20,7 +20,8 @@ jobs:
         ports:
           - 15001:15001
         env:
-          ALTERTABLE_MOCK_API_KEYS: valid_api_key
+          ALTERTABLE_MOCK_API_KEYS: "valid_api_key"
+          ALTERTABLE_MOCK_ENVIRONMENTS: "production,integration_env"
         options: >-
           --health-cmd "exit 0"
           --health-interval 5s

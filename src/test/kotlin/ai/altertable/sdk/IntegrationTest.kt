@@ -60,7 +60,7 @@ class IntegrationTest {
         var apiError: ApiError? = null
         val config = MobileConfig(
             apiKey = "valid_api_key",
-            environment = "invalid_env",
+            environment = "missing_env",
             baseUrl = baseUrl,
             onError = { err: Exception -> 
                 if (err is ApiError) {
