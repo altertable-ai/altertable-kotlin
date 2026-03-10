@@ -40,6 +40,7 @@ class Transport(
             val response = withContext(Dispatchers.IO) {
                 client.post("${config.baseUrl}$endpoint") {
                     parameter("apiKey", config.apiKey)
+                    parameter("environment", config.environment)
                     contentType(ContentType.Application.Json)
                     setBody(serialize(payload))
                 }
