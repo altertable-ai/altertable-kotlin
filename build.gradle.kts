@@ -57,8 +57,8 @@ publishing {
                 developers {
                     developer {
                         id.set("altertable-ai")
-                        name.set("Altertable AI")
-                        email.set("engineering@altertable.ai")
+                        name.set("Altertable")
+                        email.set("contact@altertable.ai")
                     }
                 }
                 scm {
