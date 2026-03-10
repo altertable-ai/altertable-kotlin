@@ -19,7 +19,7 @@ class ConsentAndQueueTest {
         
         // wait for Dispatchers.IO
         var queueItems = emptyList<Map<String, Any?>>()
-        for (i in 0 until 20) {
+        for (_i in 0 until 20) {
             queueItems = client.eventQueue.flush()
             if (queueItems.isNotEmpty()) break
             delay(50)
@@ -37,7 +37,7 @@ class ConsentAndQueueTest {
         
         client.configure(config.copy(trackingConsent = TrackingConsentState.GRANTED))
         
-        for (i in 0 until 20) {
+        for (_i in 0 until 20) {
             val emptyQueue = client.eventQueue.flush()
             if (emptyQueue.isEmpty()) {
                 break
