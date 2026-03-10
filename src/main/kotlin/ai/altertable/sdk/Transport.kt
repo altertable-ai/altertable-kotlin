@@ -83,6 +83,7 @@ class Transport(
                 is String -> kotlinx.serialization.json.JsonPrimitive(value)
                 is Number -> kotlinx.serialization.json.JsonPrimitive(value)
                 is Boolean -> kotlinx.serialization.json.JsonPrimitive(value)
+                @Suppress("UNCHECKED_CAST")
                 is Map<*, *> -> mapToJsonElement(value as Map<String, Any?>)
                 null -> kotlinx.serialization.json.JsonNull
                 else -> kotlinx.serialization.json.JsonPrimitive(value.toString())

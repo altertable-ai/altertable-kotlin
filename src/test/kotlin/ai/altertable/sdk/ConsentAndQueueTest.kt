@@ -11,7 +11,7 @@ class ConsentAndQueueTest {
 
     @Test
     fun `test event queue buffering and flush on consent granted`() = runBlocking {
-        val config = AltertableConfig(apiKey = "test-key", trackingConsent = TrackingConsentState.PENDING)
+        val config = MobileConfig(apiKey = "test-key", trackingConsent = TrackingConsentState.PENDING)
         val client = AltertableClient(config)
         
         // Track an event while pending
@@ -19,7 +19,7 @@ class ConsentAndQueueTest {
         
         // wait for Dispatchers.IO
         var queueItems = emptyList<Map<String, Any?>>()
-        repeat(20) {
+        for (i in 0 until 20) {
             queueItems = client.eventQueue.flush()
             if (queueItems.isNotEmpty()) break
             delay(50)
@@ -37,14 +37,9 @@ class ConsentAndQueueTest {
         
         client.configure(config.copy(trackingConsent = TrackingConsentState.GRANTED))
         
-        repeat(20) {
+        for (i in 0 until 20) {
             val emptyQueue = client.eventQueue.flush()
             if (emptyQueue.isEmpty()) {
-                
-                
-                
-                // `val events = eventQueue.flush(); for (evt in events) { transport.post(endpoint, payload) }`
-                
                 break
             }
             client.eventQueue.enqueue(emptyQueue[0])
@@ -56,7 +51,7 @@ class ConsentAndQueueTest {
 
     @Test
     fun `test events are dropped when consent is denied`() = runBlocking {
-        val config = AltertableConfig(apiKey = "test-key", trackingConsent = TrackingConsentState.DENIED)
+        val config = MobileConfig(apiKey = "test-key", trackingConsent = TrackingConsentState.DENIED)
         val client = AltertableClient(config)
         
         client.track("TestEvent")
@@ -68,7 +63,7 @@ class ConsentAndQueueTest {
 
     @Test
     fun `test transport construction with config`() {
-        val config = AltertableConfig(apiKey = "test-key", baseUrl = "https://example.com")
+        val config = MobileConfig(apiKey = "test-key", baseUrl = "https://example.com")
         val transport = Transport(config)
         assertNotNull(transport)
     }
