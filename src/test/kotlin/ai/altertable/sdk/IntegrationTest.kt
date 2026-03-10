@@ -31,7 +31,7 @@ class IntegrationTest {
     @Test
     fun `test track, identify, alias success`() = runBlocking {
         var caughtError: Exception? = null
-        val config = MobileConfig(
+        val config = AltertableConfig(
             apiKey = "valid_api_key",
             environment = "production",
             baseUrl = baseUrl,
@@ -59,7 +59,7 @@ class IntegrationTest {
     @Test
     fun `test invalid environment returns 400`() = runBlocking {
         var apiError: ApiError? = null
-        val config = MobileConfig(
+        val config = AltertableConfig(
             apiKey = "valid_api_key",
             environment = "missing_env",
             baseUrl = baseUrl,
@@ -83,7 +83,7 @@ class IntegrationTest {
     @Test
     fun `test 401 API key returns error`() = runBlocking {
         var apiError: ApiError? = null
-        val config = MobileConfig(
+        val config = AltertableConfig(
             apiKey = "invalid_key", // mock usually rejects this if it expects valid_api_key
             baseUrl = baseUrl,
             onError = { err: Exception -> 
