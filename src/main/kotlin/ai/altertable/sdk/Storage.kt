@@ -78,8 +78,8 @@ class DataStoreStorage(
             dataStore.edit { preferences ->
                 val value = preferences[fromKey]
                 if (value != null) {
-                    preferences[toKey] = value
                     preferences.remove(fromKey)
+                    preferences[toKey] = value
                 }
             }
         }
