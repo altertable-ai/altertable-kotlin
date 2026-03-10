@@ -21,6 +21,8 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
     testImplementation("io.ktor:ktor-client-mock:2.3.8")
+    testImplementation("org.testcontainers:testcontainers:1.19.7")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.7")
 }
 
 tasks.test {
