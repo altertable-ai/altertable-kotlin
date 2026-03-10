@@ -28,13 +28,13 @@ class IntegrationTest {
 
     @Test
     fun `test track, identify, alias success`() = runBlocking {
-        var errorOccurred = false
+        var caughtError: Exception? = null
         val config = MobileConfig(
             apiKey = "valid_api_key",
+            environment = "production",
             baseUrl = baseUrl,
             onError = { err: Exception -> 
-                errorOccurred = true
-                err.printStackTrace()
+                caughtError = err
             }
         )
         val client = AltertableClient(config)
@@ -49,7 +49,7 @@ class IntegrationTest {
         // If no error occurred, it passed. We could also query the mock server to see if events arrived,
         // but test states: ensure tests for track, identify, alias. 
         // We just verify no network error or 4xx was thrown.
-        assertTrue(!errorOccurred, "An error occurred during successful track/identify/alias requests")
+        assertTrue(caughtError == null, "An error occurred during successful track/identify/alias requests: ${caughtError?.message}")
     }
 
     @Test
@@ -57,6 +57,7 @@ class IntegrationTest {
         var apiError: ApiError? = null
         val config = MobileConfig(
             apiKey = "valid_api_key",
+            environment = "production",
             baseUrl = baseUrl,
             environment = "invalid_env",
             onError = { err: Exception -> 
