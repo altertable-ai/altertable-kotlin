@@ -20,7 +20,7 @@ class ApiError(
 
 class NetworkError(message: String, cause: Throwable) : AltertableError(message, cause)
 
-data class MobileConfig(
+data class AltertableConfig(
     val apiKey: String,
     val baseUrl: String = "https://api.altertable.ai",
     val environment: String = "production",
@@ -32,7 +32,7 @@ data class MobileConfig(
     val flushOnBackground: Boolean = true
 ) {
     companion object {
-        val MOBILE_DEFAULTS = MobileConfig(
+        val MOBILE_DEFAULTS = AltertableConfig(
             apiKey = "" // Must be provided
         )
     }
