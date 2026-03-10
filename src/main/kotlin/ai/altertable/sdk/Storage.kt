@@ -41,6 +41,7 @@ class DataStoreStorage(
     private val dataStore: DataStore<Preferences>
 ) : StorageApi {
 
+    @Suppress("SwallowedException")
     override fun getItem(key: String): String? {
         val prefKey = stringPreferencesKey(key)
         return try {

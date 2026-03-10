@@ -7,7 +7,9 @@ class SessionManager(
     private val apiKey: String,
     private val environment: String
 ) {
-    private val storageKeyPrefix = "${Constants.STORAGE_KEY_PREFIX}${Constants.STORAGE_KEY_SEPARATOR}$apiKey${Constants.STORAGE_KEY_SEPARATOR}$environment"
+    private val storageKeyPrefix = "${Constants.STORAGE_KEY_PREFIX}" +
+        "${Constants.STORAGE_KEY_SEPARATOR}$apiKey" +
+        "${Constants.STORAGE_KEY_SEPARATOR}$environment"
     private val sessionIdKey = "$storageKeyPrefix.session_id"
     private val lastEventAtKey = "$storageKeyPrefix.last_event_at"
 

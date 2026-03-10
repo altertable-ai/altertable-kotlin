@@ -7,7 +7,9 @@ class IdentityManager(
     private val apiKey: String,
     private val environment: String
 ) {
-    private val storageKeyPrefix = "${Constants.STORAGE_KEY_PREFIX}${Constants.STORAGE_KEY_SEPARATOR}$apiKey${Constants.STORAGE_KEY_SEPARATOR}$environment"
+    private val storageKeyPrefix = "${Constants.STORAGE_KEY_PREFIX}" +
+        "${Constants.STORAGE_KEY_SEPARATOR}$apiKey" +
+        "${Constants.STORAGE_KEY_SEPARATOR}$environment"
     private val deviceIdKey = "$storageKeyPrefix.device_id"
     private val distinctIdKey = "$storageKeyPrefix.distinct_id"
     private val anonymousIdKey = "$storageKeyPrefix.anonymous_id"
@@ -30,9 +32,8 @@ class IdentityManager(
     }
 
     private fun isReservedId(userId: String): Boolean {
-        if (Constants.RESERVED_USER_IDS_CASE_SENSITIVE.contains(userId)) return true
-        if (Constants.RESERVED_USER_IDS.contains(userId.lowercase())) return true
-        return false
+        return Constants.RESERVED_USER_IDS_CASE_SENSITIVE.contains(userId) ||
+            Constants.RESERVED_USER_IDS.contains(userId.lowercase())
     }
 
     fun identify(userId: String) {

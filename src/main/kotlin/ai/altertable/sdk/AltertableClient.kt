@@ -26,6 +26,7 @@ class AltertableClient(val config: MobileConfig) {
         sessionManager.renewSession()
     }
 
+    @Suppress("UnusedPrivateProperty", "UnusedParameter", "UNUSED_PARAMETER")
     fun track(event: String, properties: Map<String, Any> = emptyMap()) {
         val sessionId = sessionManager.getSessionIdAndTouch()
         // TODO: Enqueue event with identity and session info (Phase 7+)
