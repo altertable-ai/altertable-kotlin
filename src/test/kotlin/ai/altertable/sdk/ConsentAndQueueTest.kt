@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 class ConsentAndQueueTest {
 
     @Test
+    @Suppress("UnusedPrivateProperty", "UNUSED_VARIABLE")
     fun `test event queue buffering and flush on consent granted`() = runBlocking {
         val config = MobileConfig(apiKey = "test-key", trackingConsent = TrackingConsentState.PENDING)
         val client = AltertableClient(config)
