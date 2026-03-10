@@ -16,26 +16,17 @@ import org.junit.jupiter.api.Assertions.assertEquals
 class IntegrationTest {
 
     companion object {
-        @Container
-        val altertableMock = GenericContainer<Nothing>("ghcr.io/altertable-ai/altertable-mock:latest").apply {
-            withExposedPorts(15001)
-        }
-
-        var baseUrl: String = ""
+        var baseUrl: String = "http://localhost:15001"
 
         @JvmStatic
         @BeforeAll
         fun setup() {
-            altertableMock.start()
-            val host = altertableMock.host
-            val port = altertableMock.getMappedPort(15001)
-            baseUrl = "http://$host:$port"
+            // Assume GitHub Actions service provides altertable-mock at localhost:15001
         }
 
         @JvmStatic
         @AfterAll
         fun teardown() {
-            altertableMock.stop()
         }
     }
 
