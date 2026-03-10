@@ -5,12 +5,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-
+/**
+ * Main entry point for interacting with the Altertable API.
+ * 
+ * Provides methods for identifying users, tracking events, and managing session state.
+ *
+ * @param config The [AltertableConfig] instance used to initialize the client.
+ */
 class AltertableClient(var config: AltertableConfig) {
+    /** The storage implementation used by this client. */
     val storage: StorageApi
+    /** The identity manager handling user identities. */
     val identityManager: IdentityManager
+    /** The session manager handling session lifecycles. */
     val sessionManager: SessionManager
+    /** The event queue for pending events when consent is pending. */
     val eventQueue: EventQueue
+    /** The transport layer used to send requests to the Altertable API. */
     val transport: Transport
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -22,6 +33,14 @@ class AltertableClient(var config: AltertableConfig) {
         transport = Transport(config)
     }
 
+    /**
+     * Updates the client's configuration dynamically.
+     * 
+     * If the `trackingConsent` changes from non-granted to [TrackingConsentState.GRANTED],
+     * any pending events in the queue will be flushed.
+     *
+     * @param updates The new [AltertableConfig] to apply.
+     */
     fun configure(updates: AltertableConfig) {
         val oldConsent = config.trackingConsent
         config = updates
@@ -32,8 +51,20 @@ class AltertableClient(var config: AltertableConfig) {
         }
     }
 
+    /**
+     * Retrieves the current tracking consent state.
+     *
+     * @return The current [TrackingConsentState].
+     */
     fun getTrackingConsent(): TrackingConsentState = config.trackingConsent
 
+    /**
+     * Identifies a user with a unique ID.
+     * 
+     * This links the current anonymous state to the known user identity.
+     *
+     * @param userId The unique identifier for the user.
+     */
     fun identify(userId: String) {
         val oldDistinctId = identityManager.distinctId
         identityManager.identify(userId)
@@ -48,6 +79,11 @@ class AltertableClient(var config: AltertableConfig) {
         enqueueOrSend("/identify", event)
     }
 
+    /**
+     * Associates a new user ID with the existing user ID.
+     *
+     * @param newUserId The new user identifier to associate.
+     */
     fun alias(newUserId: String) {
         val event = mutableMapOf<String, Any?>(
             "timestamp" to java.time.Instant.now().toString(),
@@ -60,6 +96,11 @@ class AltertableClient(var config: AltertableConfig) {
         enqueueOrSend("/alias", event)
     }
 
+    /**
+     * Resets the client state, clearing the current user identity and session.
+     *
+     * @param resetDeviceId If `true`, a new device ID will be generated. Default is `false`.
+     */
     fun reset(resetDeviceId: Boolean = false) {
         identityManager.reset(resetDeviceId)
         sessionManager.renewSession()
@@ -68,6 +109,12 @@ class AltertableClient(var config: AltertableConfig) {
         }
     }
 
+    /**
+     * Tracks an event with the given name and optional properties.
+     *
+     * @param event The name of the event to track.
+     * @param properties Optional properties associated with the event. Default is an empty map.
+     */
     @Suppress("UnusedPrivateProperty", "UnusedParameter", "UNUSED_PARAMETER")
     fun track(
         event: String,
@@ -111,10 +158,22 @@ class AltertableClient(var config: AltertableConfig) {
     companion object {
         private var instance: AltertableClient? = null
 
+        /**
+         * Initializes and returns the shared [AltertableClient] instance.
+         *
+         * @param config The [AltertableConfig] to configure the client with.
+         * @return The configured [AltertableClient] instance.
+         */
         fun setup(config: AltertableConfig): AltertableClient {
             return AltertableClient(config).also { instance = it }
         }
 
+        /**
+         * Returns the shared [AltertableClient] instance.
+         *
+         * @return The previously configured [AltertableClient] instance.
+         * @throws AltertableError if the client has not been configured via [setup].
+         */
         fun shared(): AltertableClient {
             return instance ?: throw AltertableError("AltertableClient not configured. Call setup() first.")
         }
