@@ -1,0 +1,446 @@
+public final class ai/altertable/sdk/AliasPayload {
+	public static final field Companion Lai/altertable/sdk/AliasPayload$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lai/altertable/sdk/AliasPayload;
+	public static synthetic fun copy$default (Lai/altertable/sdk/AliasPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lai/altertable/sdk/AliasPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnonymousId ()Ljava/lang/String;
+	public final fun getDeviceId ()Ljava/lang/String;
+	public final fun getDistinctId ()Ljava/lang/String;
+	public final fun getEnvironment ()Ljava/lang/String;
+	public final fun getNewUserId ()Ljava/lang/String;
+	public final fun getRelease ()Ljava/lang/String;
+	public final fun getTimestamp ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class ai/altertable/sdk/AliasPayload$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lai/altertable/sdk/AliasPayload$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lai/altertable/sdk/AliasPayload;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lai/altertable/sdk/AliasPayload;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/AliasPayload$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class ai/altertable/sdk/AltertableBeforeSend {
+	public abstract fun beforeSend (Lai/altertable/sdk/ApiPayload;)Lai/altertable/sdk/ApiPayload;
+}
+
+public final class ai/altertable/sdk/AltertableClient : ai/altertable/sdk/AltertableInterface {
+	public static final field Companion Lai/altertable/sdk/AltertableClient$Companion;
+	public fun <init> (Lai/altertable/sdk/AltertableConfig;)V
+	public fun <init> (Lai/altertable/sdk/AltertableConfig;Lai/altertable/sdk/StorageApi;Lai/altertable/sdk/ContextProvider;)V
+	public synthetic fun <init> (Lai/altertable/sdk/AltertableConfig;Lai/altertable/sdk/StorageApi;Lai/altertable/sdk/ContextProvider;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun alias (Ljava/lang/String;)V
+	public fun close ()V
+	public fun configure (Lai/altertable/sdk/AltertableConfig;)V
+	public fun flush ()V
+	public fun flushSuspending (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getTrackingConsent ()Lai/altertable/sdk/TrackingConsentState;
+	public fun identify (Ljava/lang/String;Ljava/util/Map;)V
+	public fun register (Ljava/lang/String;Ljava/lang/Object;)V
+	public fun reset (ZZ)V
+	public fun screen (Ljava/lang/String;Ljava/util/Map;)V
+	public fun track (Ljava/lang/String;Ljava/util/Map;)V
+	public fun unregister (Ljava/lang/String;)V
+	public fun updateTraits (Ljava/util/Map;)V
+}
+
+public final class ai/altertable/sdk/AltertableClient$Companion {
+	public final fun setup (Lai/altertable/sdk/AltertableConfig;)Lai/altertable/sdk/AltertableClient;
+	public final fun setup (Lai/altertable/sdk/AltertableConfig;Lai/altertable/sdk/StorageApi;Lai/altertable/sdk/ContextProvider;)Lai/altertable/sdk/AltertableClient;
+	public final fun setup (Lkotlin/jvm/functions/Function1;)Lai/altertable/sdk/AltertableClient;
+	public static synthetic fun setup$default (Lai/altertable/sdk/AltertableClient$Companion;Lai/altertable/sdk/AltertableConfig;Lai/altertable/sdk/StorageApi;Lai/altertable/sdk/ContextProvider;ILjava/lang/Object;)Lai/altertable/sdk/AltertableClient;
+	public final fun shared ()Lai/altertable/sdk/AltertableClient;
+	public final fun with (Lai/altertable/sdk/AltertableConfig;)Lai/altertable/sdk/AltertableInterface;
+	public final fun with (Lkotlin/jvm/functions/Function1;)Lai/altertable/sdk/AltertableInterface;
+}
+
+public final class ai/altertable/sdk/AltertableConfig {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lai/altertable/sdk/TrackingConsentState;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ZLkotlinx/coroutines/CoroutineDispatcher;Lai/altertable/sdk/AltertableLogger;IJZZLjava/util/List;Ljava/util/List;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lai/altertable/sdk/TrackingConsentState;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ZLkotlinx/coroutines/CoroutineDispatcher;Lai/altertable/sdk/AltertableLogger;IJZZLjava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()I
+	public final fun component11-UwyO8pc ()J
+	public final fun component12 ()Z
+	public final fun component13 ()Z
+	public final fun component14 ()Ljava/util/List;
+	public final fun component15 ()Ljava/util/List;
+	public final fun component16 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lai/altertable/sdk/TrackingConsentState;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Lkotlin/jvm/functions/Function1;
+	public final fun component7 ()Z
+	public final fun component8 ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun component9 ()Lai/altertable/sdk/AltertableLogger;
+	public final fun copy-Q2DFlHg (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lai/altertable/sdk/TrackingConsentState;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ZLkotlinx/coroutines/CoroutineDispatcher;Lai/altertable/sdk/AltertableLogger;IJZZLjava/util/List;Ljava/util/List;I)Lai/altertable/sdk/AltertableConfig;
+	public static synthetic fun copy-Q2DFlHg$default (Lai/altertable/sdk/AltertableConfig;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lai/altertable/sdk/TrackingConsentState;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ZLkotlinx/coroutines/CoroutineDispatcher;Lai/altertable/sdk/AltertableLogger;IJZZLjava/util/List;Ljava/util/List;IILjava/lang/Object;)Lai/altertable/sdk/AltertableConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getApiKey ()Ljava/lang/String;
+	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getBeforeSend ()Ljava/util/List;
+	public final fun getCaptureScreenViews ()Z
+	public final fun getDebug ()Z
+	public final fun getDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun getEnvironment ()Ljava/lang/String;
+	public final fun getFlushOnBackground ()Z
+	public final fun getIntegrations ()Ljava/util/List;
+	public final fun getLogger ()Lai/altertable/sdk/AltertableLogger;
+	public final fun getMaxQueueSize ()I
+	public final fun getMaxRetries ()I
+	public final fun getOnError ()Lkotlin/jvm/functions/Function1;
+	public final fun getRelease ()Ljava/lang/String;
+	public final fun getRequestTimeout-UwyO8pc ()J
+	public final fun getTrackingConsent ()Lai/altertable/sdk/TrackingConsentState;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class ai/altertable/sdk/AltertableConfigBuilder {
+	public fun <init> ()V
+	public final fun build ()Lai/altertable/sdk/AltertableConfig;
+	public final fun getApiKey ()Ljava/lang/String;
+	public final fun getBaseUrl ()Ljava/lang/String;
+	public final fun getBeforeSend ()Ljava/util/List;
+	public final fun getCaptureScreenViews ()Z
+	public final fun getDebug ()Z
+	public final fun getDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun getEnvironment ()Ljava/lang/String;
+	public final fun getFlushOnBackground ()Z
+	public final fun getIntegrations ()Ljava/util/List;
+	public final fun getLogger ()Lai/altertable/sdk/AltertableLogger;
+	public final fun getMaxQueueSize ()I
+	public final fun getMaxRetries ()I
+	public final fun getOnError ()Lkotlin/jvm/functions/Function1;
+	public final fun getRelease ()Ljava/lang/String;
+	public final fun getRequestTimeout-UwyO8pc ()J
+	public final fun getTrackingConsent ()Lai/altertable/sdk/TrackingConsentState;
+	public final fun setApiKey (Ljava/lang/String;)V
+	public final fun setBaseUrl (Ljava/lang/String;)V
+	public final fun setBeforeSend (Ljava/util/List;)V
+	public final fun setCaptureScreenViews (Z)V
+	public final fun setDebug (Z)V
+	public final fun setDispatcher (Lkotlinx/coroutines/CoroutineDispatcher;)V
+	public final fun setEnvironment (Ljava/lang/String;)V
+	public final fun setFlushOnBackground (Z)V
+	public final fun setIntegrations (Ljava/util/List;)V
+	public final fun setLogger (Lai/altertable/sdk/AltertableLogger;)V
+	public final fun setMaxQueueSize (I)V
+	public final fun setMaxRetries (I)V
+	public final fun setOnError (Lkotlin/jvm/functions/Function1;)V
+	public final fun setRelease (Ljava/lang/String;)V
+	public final fun setRequestTimeout-LRDsOJo (J)V
+	public final fun setTrackingConsent (Lai/altertable/sdk/TrackingConsentState;)V
+}
+
+public class ai/altertable/sdk/AltertableError : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public abstract interface class ai/altertable/sdk/AltertableIntegration {
+	public abstract fun install (Lai/altertable/sdk/AltertableInterface;Lai/altertable/sdk/AltertableConfig;)V
+	public abstract fun uninstall ()V
+}
+
+public abstract interface class ai/altertable/sdk/AltertableInterface : java/lang/AutoCloseable {
+	public abstract fun alias (Ljava/lang/String;)V
+	public abstract fun configure (Lai/altertable/sdk/AltertableConfig;)V
+	public abstract fun flush ()V
+	public abstract fun flushSuspending (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getTrackingConsent ()Lai/altertable/sdk/TrackingConsentState;
+	public abstract fun identify (Ljava/lang/String;Ljava/util/Map;)V
+	public static synthetic fun identify$default (Lai/altertable/sdk/AltertableInterface;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)V
+	public abstract fun register (Ljava/lang/String;Ljava/lang/Object;)V
+	public abstract fun reset (ZZ)V
+	public static synthetic fun reset$default (Lai/altertable/sdk/AltertableInterface;ZZILjava/lang/Object;)V
+	public abstract fun screen (Ljava/lang/String;Ljava/util/Map;)V
+	public static synthetic fun screen$default (Lai/altertable/sdk/AltertableInterface;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)V
+	public abstract fun track (Ljava/lang/String;Ljava/util/Map;)V
+	public static synthetic fun track$default (Lai/altertable/sdk/AltertableInterface;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)V
+	public abstract fun unregister (Ljava/lang/String;)V
+	public abstract fun updateTraits (Ljava/util/Map;)V
+}
+
+public final class ai/altertable/sdk/AltertableInterface$DefaultImpls {
+	public static synthetic fun identify$default (Lai/altertable/sdk/AltertableInterface;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)V
+	public static synthetic fun reset$default (Lai/altertable/sdk/AltertableInterface;ZZILjava/lang/Object;)V
+	public static synthetic fun screen$default (Lai/altertable/sdk/AltertableInterface;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)V
+	public static synthetic fun track$default (Lai/altertable/sdk/AltertableInterface;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)V
+}
+
+public abstract interface annotation class ai/altertable/sdk/AltertableInternal : java/lang/annotation/Annotation {
+}
+
+public abstract interface class ai/altertable/sdk/AltertableLogger {
+	public abstract fun log (Lai/altertable/sdk/AltertableLogger$LogLevel;Ljava/lang/String;)V
+}
+
+public final class ai/altertable/sdk/AltertableLogger$LogLevel : java/lang/Enum {
+	public static final field DEBUG Lai/altertable/sdk/AltertableLogger$LogLevel;
+	public static final field ERROR Lai/altertable/sdk/AltertableLogger$LogLevel;
+	public static final field INFO Lai/altertable/sdk/AltertableLogger$LogLevel;
+	public static final field WARN Lai/altertable/sdk/AltertableLogger$LogLevel;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lai/altertable/sdk/AltertableLogger$LogLevel;
+	public static fun values ()[Lai/altertable/sdk/AltertableLogger$LogLevel;
+}
+
+public final class ai/altertable/sdk/ApiError : ai/altertable/sdk/AltertableError {
+	public fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDetails ()Ljava/util/Map;
+	public final fun getErrorCode ()Ljava/lang/String;
+	public final fun getStatus ()I
+	public final fun getStatusText ()Ljava/lang/String;
+}
+
+public abstract class ai/altertable/sdk/ApiPayload {
+	public static final field Companion Lai/altertable/sdk/ApiPayload$Companion;
+	public synthetic fun <init> (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V
+	public abstract fun getEndpoint ()Ljava/lang/String;
+	public static final synthetic fun write$Self (Lai/altertable/sdk/ApiPayload;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
+}
+
+public final class ai/altertable/sdk/ApiPayload$Alias : ai/altertable/sdk/ApiPayload {
+	public static final field Companion Lai/altertable/sdk/ApiPayload$Alias$Companion;
+	public fun <init> (Lai/altertable/sdk/AliasPayload;)V
+	public final fun component1 ()Lai/altertable/sdk/AliasPayload;
+	public final fun copy (Lai/altertable/sdk/AliasPayload;)Lai/altertable/sdk/ApiPayload$Alias;
+	public static synthetic fun copy$default (Lai/altertable/sdk/ApiPayload$Alias;Lai/altertable/sdk/AliasPayload;ILjava/lang/Object;)Lai/altertable/sdk/ApiPayload$Alias;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getEndpoint ()Ljava/lang/String;
+	public final fun getPayload ()Lai/altertable/sdk/AliasPayload;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class ai/altertable/sdk/ApiPayload$Alias$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lai/altertable/sdk/ApiPayload$Alias$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lai/altertable/sdk/ApiPayload$Alias;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lai/altertable/sdk/ApiPayload$Alias;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/ApiPayload$Alias$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/ApiPayload$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/ApiPayload$Identify : ai/altertable/sdk/ApiPayload {
+	public static final field Companion Lai/altertable/sdk/ApiPayload$Identify$Companion;
+	public fun <init> (Lai/altertable/sdk/IdentifyPayload;)V
+	public final fun component1 ()Lai/altertable/sdk/IdentifyPayload;
+	public final fun copy (Lai/altertable/sdk/IdentifyPayload;)Lai/altertable/sdk/ApiPayload$Identify;
+	public static synthetic fun copy$default (Lai/altertable/sdk/ApiPayload$Identify;Lai/altertable/sdk/IdentifyPayload;ILjava/lang/Object;)Lai/altertable/sdk/ApiPayload$Identify;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getEndpoint ()Ljava/lang/String;
+	public final fun getPayload ()Lai/altertable/sdk/IdentifyPayload;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class ai/altertable/sdk/ApiPayload$Identify$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lai/altertable/sdk/ApiPayload$Identify$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lai/altertable/sdk/ApiPayload$Identify;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lai/altertable/sdk/ApiPayload$Identify;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/ApiPayload$Identify$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/ApiPayload$Track : ai/altertable/sdk/ApiPayload {
+	public static final field Companion Lai/altertable/sdk/ApiPayload$Track$Companion;
+	public fun <init> (Lai/altertable/sdk/TrackPayload;)V
+	public final fun component1 ()Lai/altertable/sdk/TrackPayload;
+	public final fun copy (Lai/altertable/sdk/TrackPayload;)Lai/altertable/sdk/ApiPayload$Track;
+	public static synthetic fun copy$default (Lai/altertable/sdk/ApiPayload$Track;Lai/altertable/sdk/TrackPayload;ILjava/lang/Object;)Lai/altertable/sdk/ApiPayload$Track;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getEndpoint ()Ljava/lang/String;
+	public final fun getPayload ()Lai/altertable/sdk/TrackPayload;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class ai/altertable/sdk/ApiPayload$Track$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lai/altertable/sdk/ApiPayload$Track$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lai/altertable/sdk/ApiPayload$Track;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lai/altertable/sdk/ApiPayload$Track;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/ApiPayload$Track$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/ContextProperties {
+	public static final field APP_BUILD Ljava/lang/String;
+	public static final field APP_NAME Ljava/lang/String;
+	public static final field APP_NAMESPACE Ljava/lang/String;
+	public static final field APP_VERSION Ljava/lang/String;
+	public static final field DEVICE_MANUFACTURER Ljava/lang/String;
+	public static final field DEVICE_MODEL Ljava/lang/String;
+	public static final field DEVICE_NAME Ljava/lang/String;
+	public static final field DEVICE_TYPE Ljava/lang/String;
+	public static final field INSTANCE Lai/altertable/sdk/ContextProperties;
+	public static final field LIB Ljava/lang/String;
+	public static final field LIBRARY_NAME Ljava/lang/String;
+	public static final field LIBRARY_VERSION Ljava/lang/String;
+	public static final field LIB_VERSION Ljava/lang/String;
+	public static final field OS Ljava/lang/String;
+	public static final field OS_VERSION Ljava/lang/String;
+	public static final field RELEASE Ljava/lang/String;
+	public static final field SCREEN_NAME Ljava/lang/String;
+	public static final field VIEWPORT Ljava/lang/String;
+}
+
+public abstract interface class ai/altertable/sdk/ContextProvider {
+	public abstract fun getSystemProperties ()Ljava/util/Map;
+}
+
+public final class ai/altertable/sdk/DefaultContextProvider : ai/altertable/sdk/ContextProvider {
+	public static final field INSTANCE Lai/altertable/sdk/DefaultContextProvider;
+	public fun getSystemProperties ()Ljava/util/Map;
+}
+
+public final class ai/altertable/sdk/IdentifyPayload {
+	public static final field Companion Lai/altertable/sdk/IdentifyPayload$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;)Lai/altertable/sdk/IdentifyPayload;
+	public static synthetic fun copy$default (Lai/altertable/sdk/IdentifyPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;ILjava/lang/Object;)Lai/altertable/sdk/IdentifyPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnonymousId ()Ljava/lang/String;
+	public final fun getDeviceId ()Ljava/lang/String;
+	public final fun getDistinctId ()Ljava/lang/String;
+	public final fun getEnvironment ()Ljava/lang/String;
+	public final fun getRelease ()Ljava/lang/String;
+	public final fun getTimestamp ()Ljava/lang/String;
+	public final fun getTraits ()Lkotlinx/serialization/json/JsonObject;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class ai/altertable/sdk/IdentifyPayload$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lai/altertable/sdk/IdentifyPayload$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lai/altertable/sdk/IdentifyPayload;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lai/altertable/sdk/IdentifyPayload;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/IdentifyPayload$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/NetworkError : ai/altertable/sdk/AltertableError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public abstract interface class ai/altertable/sdk/StorageApi {
+	public abstract fun getItem (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun migrate (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun removeItem (Ljava/lang/String;)V
+	public abstract fun setItem (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class ai/altertable/sdk/TrackPayload {
+	public static final field Companion Lai/altertable/sdk/TrackPayload$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;)Lai/altertable/sdk/TrackPayload;
+	public static synthetic fun copy$default (Lai/altertable/sdk/TrackPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;ILjava/lang/Object;)Lai/altertable/sdk/TrackPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnonymousId ()Ljava/lang/String;
+	public final fun getDeviceId ()Ljava/lang/String;
+	public final fun getDistinctId ()Ljava/lang/String;
+	public final fun getEnvironment ()Ljava/lang/String;
+	public final fun getEvent ()Ljava/lang/String;
+	public final fun getProperties ()Lkotlinx/serialization/json/JsonObject;
+	public final fun getRelease ()Ljava/lang/String;
+	public final fun getSessionId ()Ljava/lang/String;
+	public final fun getTimestamp ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class ai/altertable/sdk/TrackPayload$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lai/altertable/sdk/TrackPayload$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lai/altertable/sdk/TrackPayload;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lai/altertable/sdk/TrackPayload;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/TrackPayload$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class ai/altertable/sdk/TrackingConsentState : java/lang/Enum {
+	public static final field DENIED Lai/altertable/sdk/TrackingConsentState;
+	public static final field DISMISSED Lai/altertable/sdk/TrackingConsentState;
+	public static final field GRANTED Lai/altertable/sdk/TrackingConsentState;
+	public static final field PENDING Lai/altertable/sdk/TrackingConsentState;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lai/altertable/sdk/TrackingConsentState;
+	public static fun values ()[Lai/altertable/sdk/TrackingConsentState;
+}
+
