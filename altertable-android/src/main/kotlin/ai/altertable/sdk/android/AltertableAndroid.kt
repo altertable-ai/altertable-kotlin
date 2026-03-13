@@ -15,7 +15,8 @@ import androidx.lifecycle.ProcessLifecycleOwner
  * - [SharedPreferencesStorage] for persistence
  * - [ProcessLifecycleObserver] for flush on app background
  *   (when [AltertableConfig.tracking.flushOnBackground] is true)
- * - [ActivityScreenTracker] for automatic screen view tracking (when [AltertableConfig.tracking.captureScreenViews] is true)
+ * - [ActivityScreenTracker] for automatic screen view tracking
+ *   (when [AltertableConfig.tracking.captureScreenViews] is true)
  *
  * Call [setup] from your [Application.onCreate].
  *
