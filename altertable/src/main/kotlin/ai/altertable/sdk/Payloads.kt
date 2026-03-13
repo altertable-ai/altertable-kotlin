@@ -98,9 +98,10 @@ private fun valueToJsonElement(value: Any?): JsonElement =
         is Number -> JsonPrimitive(value)
         is Boolean -> JsonPrimitive(value)
         is Map<*, *> -> {
-            val safeMap = value.entries
-                .filter { it.key is String }
-                .associate { it.key as String to it.value }
+            val safeMap =
+                value.entries
+                    .filter { it.key is String }
+                    .associate { it.key as String to it.value }
             JsonObject(safeMap.mapValues { (_, v) -> valueToJsonElement(v) })
         }
         is Collection<*> -> JsonArray(value.map { valueToJsonElement(it) })
@@ -113,6 +114,7 @@ private fun valueToJsonElement(value: Any?): JsonElement =
 @Serializable
 internal sealed class ApiPayload {
     internal abstract val endpoint: String
+
     @Transient
     internal open val body: Any
         get() = error("body must be overridden")
@@ -123,6 +125,7 @@ internal sealed class ApiPayload {
         val payload: TrackPayload,
     ) : ApiPayload() {
         override val endpoint: String = "/track"
+
         @Transient
         override val body: Any get() = payload
     }
@@ -133,6 +136,7 @@ internal sealed class ApiPayload {
         val payload: IdentifyPayload,
     ) : ApiPayload() {
         override val endpoint: String = "/identify"
+
         @Transient
         override val body: Any get() = payload
     }
@@ -143,28 +147,32 @@ internal sealed class ApiPayload {
         val payload: AliasPayload,
     ) : ApiPayload() {
         override val endpoint: String = "/alias"
+
         @Transient
         override val body: Any get() = payload
     }
 }
 
-
 /**
  * Converts an ApiPayload to a public Event for interceptors.
  */
-internal fun ApiPayload.toEvent(): Event = when (this) {
-    is ApiPayload.Track -> Event.Track(
-        event = payload.event,
-        properties = jsonObjectToMap(payload.properties),
-    )
-    is ApiPayload.Identify -> Event.Identify(
-        userId = payload.distinctId,
-        traits = jsonObjectToMap(payload.traits),
-    )
-    is ApiPayload.Alias -> Event.Alias(
-        newUserId = payload.newUserId,
-    )
-}
+internal fun ApiPayload.toEvent(): Event =
+    when (this) {
+        is ApiPayload.Track ->
+            Event.Track(
+                event = payload.event,
+                properties = jsonObjectToMap(payload.properties),
+            )
+        is ApiPayload.Identify ->
+            Event.Identify(
+                userId = payload.distinctId,
+                traits = jsonObjectToMap(payload.traits),
+            )
+        is ApiPayload.Alias ->
+            Event.Alias(
+                newUserId = payload.newUserId,
+            )
+    }
 
 /**
  * Applies changes from an Event back to an ApiPayload.
@@ -173,32 +181,35 @@ internal fun ApiPayload.toEvent(): Event = when (this) {
 @Suppress("ReturnCount")
 internal fun ApiPayload.applyEvent(event: Event?): ApiPayload? {
     if (event == null) return null
-    
+
     return when (this) {
         is ApiPayload.Track -> {
             val trackEvent = event as? Event.Track ?: return this
             this.copy(
-                payload = payload.copy(
-                    event = trackEvent.event,
-                    properties = propertiesToJsonObject(trackEvent.properties),
-                ),
+                payload =
+                    payload.copy(
+                        event = trackEvent.event,
+                        properties = propertiesToJsonObject(trackEvent.properties),
+                    ),
             )
         }
         is ApiPayload.Identify -> {
             val identifyEvent = event as? Event.Identify ?: return this
             this.copy(
-                payload = payload.copy(
-                    distinctId = identifyEvent.userId,
-                    traits = propertiesToJsonObject(identifyEvent.traits),
-                ),
+                payload =
+                    payload.copy(
+                        distinctId = identifyEvent.userId,
+                        traits = propertiesToJsonObject(identifyEvent.traits),
+                    ),
             )
         }
         is ApiPayload.Alias -> {
             val aliasEvent = event as? Event.Alias ?: return this
             this.copy(
-                payload = payload.copy(
-                    newUserId = aliasEvent.newUserId,
-                ),
+                payload =
+                    payload.copy(
+                        newUserId = aliasEvent.newUserId,
+                    ),
             )
         }
     }
@@ -208,24 +219,26 @@ internal fun ApiPayload.applyEvent(event: Event?): ApiPayload? {
  * Converts a JsonObject to a Map<String, Any> for public API.
  */
 private fun jsonObjectToMap(jsonObject: JsonObject): Map<String, Any> =
-    jsonObject.entries.mapNotNull { (key, value) ->
-        jsonElementToValue(value)?.let { key to it }
-    }.toMap()
+    jsonObject.entries
+        .mapNotNull { (key, value) ->
+            jsonElementToValue(value)?.let { key to it }
+        }.toMap()
 
 /**
  * Converts a JsonElement to a plain Kotlin value.
  */
-private fun jsonElementToValue(element: JsonElement): Any? = when (element) {
-    is JsonPrimitive -> {
-        when {
-            element.isString -> element.content
-            element.content == "true" || element.content == "false" -> element.content.toBoolean()
-            element.content.toLongOrNull() != null -> element.content.toLong()
-            element.content.toDoubleOrNull() != null -> element.content.toDouble()
-            else -> element.content
+private fun jsonElementToValue(element: JsonElement): Any? =
+    when (element) {
+        is JsonPrimitive -> {
+            when {
+                element.isString -> element.content
+                element.content == "true" || element.content == "false" -> element.content.toBoolean()
+                element.content.toLongOrNull() != null -> element.content.toLong()
+                element.content.toDoubleOrNull() != null -> element.content.toDouble()
+                else -> element.content
+            }
         }
+        is JsonObject -> jsonObjectToMap(element)
+        is JsonArray -> element.map { jsonElementToValue(it) }
+        is JsonNull -> null
     }
-    is JsonObject -> jsonObjectToMap(element)
-    is JsonArray -> element.map { jsonElementToValue(it) }
-    is JsonNull -> null
-}

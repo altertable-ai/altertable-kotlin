@@ -16,11 +16,12 @@ class ConsentAndQueueTest {
     fun `test event queue buffering and flush on consent granted`() =
         runTest {
             val testDispatcher = UnconfinedTestDispatcher(testScheduler)
-            val config = AltertableConfig(
-                apiKey = "test-key",
-                tracking = TrackingConfig(consent = TrackingConsent.PENDING),
-                dispatcher = testDispatcher,
-            )
+            val config =
+                AltertableConfig(
+                    apiKey = "test-key",
+                    tracking = TrackingConfig(consent = TrackingConsent.PENDING),
+                    dispatcher = testDispatcher,
+                )
             val client = AltertableClient(config)
 
             // Track an event while pending
@@ -48,11 +49,12 @@ class ConsentAndQueueTest {
     fun `test events are dropped when consent is denied`() =
         runTest {
             val testDispatcher = UnconfinedTestDispatcher(testScheduler)
-            val config = AltertableConfig(
-                apiKey = "test-key",
-                tracking = TrackingConfig(consent = TrackingConsent.DENIED),
-                dispatcher = testDispatcher,
-            )
+            val config =
+                AltertableConfig(
+                    apiKey = "test-key",
+                    tracking = TrackingConfig(consent = TrackingConsent.DENIED),
+                    dispatcher = testDispatcher,
+                )
             val client = AltertableClient(config)
 
             client.track("TestEvent")
@@ -64,17 +66,19 @@ class ConsentAndQueueTest {
 
     @Test
     fun `test transport construction with config`() {
-        val config = AltertableConfig(
-            apiKey = "test-key",
-            network = NetworkConfig(baseUrl = "https://example.com"),
-        )
-        val transport = Transport(
-            apiKey = config.apiKey,
-            baseUrl = config.network.baseUrl,
-            dispatcher = config.dispatcher,
-            requestTimeout = config.network.requestTimeout,
-            maxRetries = config.network.maxRetries,
-        )
+        val config =
+            AltertableConfig(
+                apiKey = "test-key",
+                network = NetworkConfig(baseUrl = "https://example.com"),
+            )
+        val transport =
+            Transport(
+                apiKey = config.apiKey,
+                baseUrl = config.network.baseUrl,
+                dispatcher = config.dispatcher,
+                requestTimeout = config.network.requestTimeout,
+                maxRetries = config.network.maxRetries,
+            )
         assertNotNull(transport)
         transport.close()
     }
@@ -83,11 +87,12 @@ class ConsentAndQueueTest {
     fun `test configure to DENIED clears queue`() =
         runTest {
             val testDispatcher = UnconfinedTestDispatcher(testScheduler)
-            val config = AltertableConfig(
-                apiKey = "test-key",
-                tracking = TrackingConfig(consent = TrackingConsent.PENDING),
-                dispatcher = testDispatcher,
-            )
+            val config =
+                AltertableConfig(
+                    apiKey = "test-key",
+                    tracking = TrackingConfig(consent = TrackingConsent.PENDING),
+                    dispatcher = testDispatcher,
+                )
             val client = AltertableClient(config)
             client.track("TestEvent")
             advanceUntilIdle()

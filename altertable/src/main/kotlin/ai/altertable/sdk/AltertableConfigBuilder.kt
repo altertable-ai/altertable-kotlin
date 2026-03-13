@@ -1,8 +1,8 @@
 package ai.altertable.sdk
 
-import kotlin.annotation.AnnotationTarget.CLASS
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlin.annotation.AnnotationTarget.CLASS
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -32,11 +32,12 @@ public class NetworkConfigBuilder {
     public var requestTimeout: Duration = 10.seconds
     public var maxRetries: Int = NetworkConfig().maxRetries
 
-    internal fun build(): NetworkConfig = NetworkConfig(
-        baseUrl = baseUrl,
-        requestTimeout = requestTimeout,
-        maxRetries = maxRetries,
-    )
+    internal fun build(): NetworkConfig =
+        NetworkConfig(
+            baseUrl = baseUrl,
+            requestTimeout = requestTimeout,
+            maxRetries = maxRetries,
+        )
 
     internal fun from(config: NetworkConfig): NetworkConfigBuilder {
         baseUrl = config.baseUrl
@@ -53,12 +54,13 @@ public class TrackingConfigBuilder {
     public var flushOnBackground: Boolean = true
     public var maxQueueSize: Int = TrackingConfig().maxQueueSize
 
-    internal fun build(): TrackingConfig = TrackingConfig(
-        consent = consent,
-        captureScreenViews = captureScreenViews,
-        flushOnBackground = flushOnBackground,
-        maxQueueSize = maxQueueSize,
-    )
+    internal fun build(): TrackingConfig =
+        TrackingConfig(
+            consent = consent,
+            captureScreenViews = captureScreenViews,
+            flushOnBackground = flushOnBackground,
+            maxQueueSize = maxQueueSize,
+        )
 
     internal fun from(config: TrackingConfig): TrackingConfigBuilder {
         consent = config.consent
@@ -93,8 +95,8 @@ public class RuntimeConfigBuilder {
         trackingBuilder.block()
     }
 
-    internal fun applyTo(config: AltertableConfig): AltertableConfig {
-        return AltertableConfig(
+    internal fun applyTo(config: AltertableConfig): AltertableConfig =
+        AltertableConfig(
             apiKey = config.apiKey,
             environment = config.environment,
             network = config.network,
@@ -106,7 +108,6 @@ public class RuntimeConfigBuilder {
             integrations = config.integrations,
             beforeSend = beforeSend,
         )
-    }
 
     internal fun from(config: AltertableConfig): RuntimeConfigBuilder {
         debug = config.debug
@@ -140,8 +141,8 @@ public class AltertableConfigBuilder {
     }
 
     @AltertableInternal
-    public fun build(): AltertableConfig {
-        return AltertableConfig(
+    public fun build(): AltertableConfig =
+        AltertableConfig(
             apiKey = apiKey,
             environment = environment,
             network = networkBuilder.build(),
@@ -153,7 +154,6 @@ public class AltertableConfigBuilder {
             integrations = integrations,
             beforeSend = beforeSend,
         )
-    }
 
     /**
      * Seeds this builder with values from an existing [AltertableConfig].

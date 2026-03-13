@@ -25,7 +25,6 @@ val hasAndroidSdk = System.getenv("ANDROID_HOME") != null ||
     file("local.properties").takeIf { it.exists() }?.readText()?.contains("sdk.dir") == true
 if (hasAndroidSdk) {
     include(":altertable-android")
+    include(":example-app")
+    project(":example-app").projectDir = file("Examples/app")
 }
-
-include(":example-app")
-project(":example-app").projectDir = file("Examples/app")

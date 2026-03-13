@@ -1,13 +1,12 @@
 package ai.altertable.sdk
 
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class, AltertableInternal::class)
-
 internal class SessionManager(
     private val storage: Storage,
     private val apiKey: String,
@@ -19,48 +18,51 @@ internal class SessionManager(
     private val sessionIdKey = "$storageKeyPrefix.session_id"
     private val lastEventAtKey = "$storageKeyPrefix.last_event_at"
 
-    private var _sessionId: String? = null
-    private var _lastEventAt: Long? = null
+    private var sessionIdValue: String? = null
+    private var lastEventAtValue: Long? = null
 
     internal val sessionId: String
-        get() = _sessionId ?: error("SessionManager not initialized. Call initialize() first.")
+        get() = sessionIdValue ?: error("SessionManager not initialized. Call initialize() first.")
 
     private fun generateSessionId(): String = "${PREFIX_SESSION_ID}-${Uuid.random()}"
 
     internal suspend fun initialize() {
         mutex.withLock {
-            if (_sessionId == null) {
-                _sessionId = storage[sessionIdKey] ?: generateSessionId().also {
+            if (sessionIdValue == null) {
+                sessionIdValue = storage[sessionIdKey] ?: generateSessionId().also {
                     storage[sessionIdKey] = it
                 }
             }
-            if (_lastEventAt == null) {
-                _lastEventAt = storage[lastEventAtKey]?.toLongOrNull() ?: clock.now().toEpochMilliseconds()
+            if (lastEventAtValue == null) {
+                lastEventAtValue = storage[lastEventAtKey]?.toLongOrNull() ?: clock.now().toEpochMilliseconds()
             }
         }
     }
 
-    internal suspend fun getSessionIdAndTouch(): String = mutex.withLock {
-        val now = clock.now().toEpochMilliseconds()
-        val currentLastEventAt = _lastEventAt ?: clock.now().toEpochMilliseconds()
-        if (now - currentLastEventAt > SESSION_EXPIRATION_TIME_MS) {
+    internal suspend fun getSessionIdAndTouch(): String =
+        mutex.withLock {
+            val now = clock.now().toEpochMilliseconds()
+            val currentLastEventAt = lastEventAtValue ?: clock.now().toEpochMilliseconds()
+            if (now - currentLastEventAt > SESSION_EXPIRATION_TIME_MS) {
+                renewSessionUnsafe()
+            }
+            lastEventAtValue = now
+            storage[lastEventAtKey] = now.toString()
+            checkNotNull(sessionIdValue) { "SessionManager not initialized. Call initialize() first." }
+        }
+
+    internal suspend fun renewSession() =
+        mutex.withLock {
             renewSessionUnsafe()
         }
-        _lastEventAt = now
-        storage[lastEventAtKey] = now.toString()
-        checkNotNull(_sessionId) { "SessionManager not initialized. Call initialize() first." }
-    }
-
-    internal suspend fun renewSession() = mutex.withLock {
-        renewSessionUnsafe()
-    }
 
     private suspend fun renewSessionUnsafe() {
-        _sessionId = generateSessionId()
-        storage[sessionIdKey] = checkNotNull(_sessionId) { "sessionId should be set after generateSessionId()" }
-        _lastEventAt = clock.now().toEpochMilliseconds()
-        storage[lastEventAtKey] = checkNotNull(_lastEventAt) {
-            "lastEventAt should be set after clock.now()"
-        }.toString()
+        sessionIdValue = generateSessionId()
+        storage[sessionIdKey] = checkNotNull(sessionIdValue) { "sessionId should be set after generateSessionId()" }
+        lastEventAtValue = clock.now().toEpochMilliseconds()
+        storage[lastEventAtKey] =
+            checkNotNull(lastEventAtValue) {
+                "lastEventAt should be set after clock.now()"
+            }.toString()
     }
 }

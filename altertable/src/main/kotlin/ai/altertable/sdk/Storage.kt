@@ -35,9 +35,10 @@ internal class InMemoryStorage : Storage {
     private val store = mutableMapOf<String, String>()
     private val mutex = Mutex()
 
-    override suspend fun get(key: String): String? = mutex.withLock {
-        store[key]
-    }
+    override suspend fun get(key: String): String? =
+        mutex.withLock {
+            store[key]
+        }
 
     override suspend fun set(
         key: String,
@@ -72,20 +73,27 @@ internal class InMemoryStorage : Storage {
  * Uses a function parameter to avoid recursion.
  */
 @OptIn(AltertableInternal::class)
-private suspend fun callStorageGet(storage: Storage, key: String): String? = storage.get(key)
+private suspend fun callStorageGet(
+    storage: Storage,
+    key: String,
+): String? = storage.get(key)
 
 /**
  * Internal helper to call the Storage interface's set method from operator extensions.
  * Uses a function parameter to avoid recursion.
  */
 @OptIn(AltertableInternal::class)
-private suspend fun callStorageSet(storage: Storage, key: String, value: String) {
+private suspend fun callStorageSet(
+    storage: Storage,
+    key: String,
+    value: String,
+) {
     storage.set(key, value)
 }
 
 /**
  * Operator extension for [Storage] to enable bracket notation: `storage[key]`.
- * 
+ *
  * Note: This enables the syntax but requires suspend context. All usages must be within suspend functions.
  */
 @AltertableInternal
@@ -93,10 +101,13 @@ public suspend operator fun Storage.get(key: String): String? = callStorageGet(t
 
 /**
  * Operator extension for [Storage] to enable bracket assignment: `storage[key] = value`.
- * 
+ *
  * Note: This enables the syntax but requires suspend context. All usages must be within suspend functions.
  */
 @AltertableInternal
-public suspend operator fun Storage.set(key: String, value: String) {
+public suspend operator fun Storage.set(
+    key: String,
+    value: String,
+) {
     callStorageSet(this, key, value)
 }

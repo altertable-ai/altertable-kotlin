@@ -26,7 +26,10 @@ public class AndroidContextProvider(
     private val packageInfo: android.content.pm.PackageInfo? by lazy {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                applicationContext.packageManager.getPackageInfo(applicationContext.packageName, PackageManager.PackageInfoFlags.of(0))
+                applicationContext.packageManager.getPackageInfo(
+                    applicationContext.packageName,
+                    PackageManager.PackageInfoFlags.of(0),
+                )
             } else {
                 @Suppress("DEPRECATION")
                 applicationContext.packageManager.getPackageInfo(applicationContext.packageName, 0)

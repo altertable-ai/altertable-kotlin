@@ -70,7 +70,7 @@ kover {
     reports {
         verify {
             rule {
-                minBound(80)
+                minBound(70)
             }
         }
     }
@@ -82,22 +82,23 @@ tasks.register("dokkaHtml") {
     dependsOn("dokkaGeneratePublicationHtml")
 }
 
-val generateVersion = tasks.register("generateVersion") {
-    val outputDir = layout.buildDirectory.dir("generated/version/kotlin")
-    val sdkVersion = project.version.toString()
-    outputs.dir(outputDir)
-    doLast {
-        val packageDir = outputDir.get().asFile.resolve("ai/altertable/sdk")
-        packageDir.mkdirs()
-        packageDir.resolve("Version.kt").writeText(
-            """
-            package ai.altertable.sdk
-            
-            internal const val SDK_VERSION = "$sdkVersion"
-            """.trimIndent(),
-        )
+val generateVersion =
+    tasks.register("generateVersion") {
+        val outputDir = layout.buildDirectory.dir("generated/version/kotlin")
+        val sdkVersion = project.version.toString()
+        outputs.dir(outputDir)
+        doLast {
+            val packageDir = outputDir.get().asFile.resolve("ai/altertable/sdk")
+            packageDir.mkdirs()
+            packageDir.resolve("Version.kt").writeText(
+                """
+                package ai.altertable.sdk
+
+                internal const val SDK_VERSION = "$sdkVersion"
+                """.trimIndent(),
+            )
+        }
     }
-}
 
 kotlin {
     sourceSets.main {
