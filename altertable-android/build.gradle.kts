@@ -68,6 +68,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
 
     testImplementation("org.robolectric:robolectric:4.13")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("androidx.test:core:1.6.1")
     testImplementation(libs.kotlin.test)
 }
 

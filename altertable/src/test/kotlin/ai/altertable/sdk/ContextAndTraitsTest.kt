@@ -1,10 +1,12 @@
 @file:Suppress("UnusedPrivateProperty")
+@file:OptIn(AltertableInternal::class)
 
 package ai.altertable.sdk
 
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -16,7 +18,7 @@ class ContextAndTraitsTest {
             val testDispatcher = UnconfinedTestDispatcher(testScheduler)
             val config = AltertableConfig(
                 apiKey = "test-key",
-                trackingConsent = TrackingConsentState.PENDING,
+                tracking = TrackingConfig(consent = TrackingConsent.PENDING),
                 dispatcher = testDispatcher,
             )
             val client = AltertableClient(config)
@@ -38,7 +40,7 @@ class ContextAndTraitsTest {
             val testDispatcher = UnconfinedTestDispatcher(testScheduler)
             val config = AltertableConfig(
                 apiKey = "test-key",
-                trackingConsent = TrackingConsentState.PENDING,
+                tracking = TrackingConfig(consent = TrackingConsent.PENDING),
                 dispatcher = testDispatcher,
             )
             val client = AltertableClient(config)
@@ -58,7 +60,7 @@ class ContextAndTraitsTest {
             val testDispatcher = UnconfinedTestDispatcher(testScheduler)
             val config = AltertableConfig(
                 apiKey = "test-key",
-                trackingConsent = TrackingConsentState.PENDING,
+                tracking = TrackingConfig(consent = TrackingConsent.PENDING),
                 dispatcher = testDispatcher,
             )
             val client = AltertableClient(config)
@@ -81,7 +83,7 @@ class ContextAndTraitsTest {
             val testDispatcher = UnconfinedTestDispatcher(testScheduler)
             val config = AltertableConfig(
                 apiKey = "test-key",
-                trackingConsent = TrackingConsentState.PENDING,
+                tracking = TrackingConfig(consent = TrackingConsent.PENDING),
                 dispatcher = testDispatcher,
             )
             val client = AltertableClient(config)
@@ -97,11 +99,17 @@ class ContextAndTraitsTest {
         }
 
     @Test
-    fun `reset with resetTrackingConsent updates consent`() {
+    fun `reset with resetTrackingConsent updates consent`() = runTest {
+        val testDispatcher = UnconfinedTestDispatcher(testScheduler)
         val storage = InMemoryStorage()
-        val config = AltertableConfig(apiKey = "test-key", trackingConsent = TrackingConsentState.DENIED)
+        val config = AltertableConfig(
+            apiKey = "test-key",
+            tracking = TrackingConfig(consent = TrackingConsent.DENIED),
+            dispatcher = testDispatcher,
+        )
         val client = AltertableClient(config, storage)
         client.reset(resetDeviceId = false, resetTrackingConsent = true)
-        assertEquals(TrackingConsentState.GRANTED, client.trackingConsent.value)
+        advanceUntilIdle()
+        assertEquals(TrackingConsent.GRANTED, client.trackingConsent.value)
     }
 }

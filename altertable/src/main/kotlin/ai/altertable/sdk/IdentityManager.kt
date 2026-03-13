@@ -60,7 +60,9 @@ internal class IdentityManager(
             if (isReservedId(userId)) return
             if (userId == _distinctId) return
 
-            val currentDistinctId = checkNotNull(_distinctId) { "IdentityManager not initialized. Call initialize() first." }
+            val currentDistinctId = checkNotNull(_distinctId) {
+                "IdentityManager not initialized. Call initialize() first."
+            }
             if (!currentDistinctId.startsWith("${PREFIX_ANONYMOUS_ID}-")) {
                 resetUnsafe(resetDeviceId = false)
             }

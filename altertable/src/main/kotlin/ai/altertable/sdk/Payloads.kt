@@ -110,6 +110,7 @@ private fun valueToJsonElement(value: Any?): JsonElement =
     }
 
 /** Sealed class for events that can be queued or sent. */
+@Serializable
 internal sealed class ApiPayload {
     internal abstract val endpoint: String
     @Transient
@@ -169,6 +170,7 @@ internal fun ApiPayload.toEvent(): Event = when (this) {
  * Applies changes from an Event back to an ApiPayload.
  * Returns null if the event should be dropped.
  */
+@Suppress("ReturnCount")
 internal fun ApiPayload.applyEvent(event: Event?): ApiPayload? {
     if (event == null) return null
     

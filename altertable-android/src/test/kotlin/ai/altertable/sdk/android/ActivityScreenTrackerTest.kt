@@ -1,11 +1,14 @@
 package ai.altertable.sdk.android
 
-import ai.altertable.sdk.AltertableClient
+import ai.altertable.sdk.Altertable
 import ai.altertable.sdk.AltertableConfig
+import ai.altertable.sdk.TrackingConfig
+import ai.altertable.sdk.TrackingConsent
 import android.app.Activity
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import android.os.Bundle
+import org.junit.Assert.assertNotNull
+import org.junit.Before
+import org.junit.Test
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.junit.runner.RunWith
@@ -14,16 +17,16 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [21])
 class ActivityScreenTrackerTest {
-    private lateinit var client: AltertableClient
+    private lateinit var client: Altertable
     private lateinit var tracker: ActivityScreenTracker
 
-    @BeforeEach
+    @Before
     fun setup() {
         val config = AltertableConfig(
             apiKey = "test-key",
-            trackingConsent = ai.altertable.sdk.TrackingConsentState.PENDING,
+            tracking = TrackingConfig(consent = TrackingConsent.PENDING),
         )
-        client = AltertableClient(config)
+        client = Altertable.create(config)
         tracker = ActivityScreenTracker(client)
     }
 
@@ -43,7 +46,7 @@ class ActivityScreenTrackerTest {
         tracker.onActivityResumed(activity)
         tracker.onActivityPaused(activity)
         tracker.onActivityStopped(activity)
-        tracker.onActivitySaveInstanceState(activity, null)
+        tracker.onActivitySaveInstanceState(activity, Bundle())
         tracker.onActivityDestroyed(activity)
         // Verify all callbacks complete without error
         assertNotNull(tracker)

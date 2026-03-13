@@ -121,6 +121,7 @@ public data class TrackingConfig(
  * @param integrations Integrations to install on setup (e.g., lifecycle tracking, screen views).
  * @param beforeSend Hooks to transform or filter events before they are sent. Return null to drop.
  */
+@Suppress("LongParameterList")
 public class AltertableConfig(
     public val apiKey: String,
     public val environment: String = "production",

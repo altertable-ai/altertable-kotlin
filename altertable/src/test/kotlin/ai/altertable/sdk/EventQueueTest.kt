@@ -2,6 +2,7 @@ package ai.altertable.sdk
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test
 private fun trackPayload(eventSuffix: Int) =
     ApiPayload.Track(
         TrackPayload(
-            timestamp = "2024-01-01T00:00:00Z",
+            timestamp = Instant.parse("2024-01-01T00:00:00Z"),
             event = "event_$eventSuffix",
             environment = "test",
             deviceId = "device-1",

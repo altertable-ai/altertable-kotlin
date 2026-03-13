@@ -23,6 +23,7 @@ import kotlinx.datetime.Clock
  * @param config The [AltertableConfig] instance used to initialize the client.
  */
 @OptIn(AltertableInternal::class)
+@Suppress("LongParameterList", "TooManyFunctions")
 internal class AltertableClient private constructor(
     initialConfig: AltertableConfig,
     private val storage: Storage,
@@ -188,7 +189,8 @@ internal class AltertableClient private constructor(
         if (needsReset) {
             log(
                 LogLevel.WARN,
-                "User \"$trimmedUserId\" is already identified as \"${identityManager.distinctId}\". The session has been automatically reset. Use alias() to link the new ID to the existing one if intentional.",
+                "User \"$trimmedUserId\" is already identified as \"${identityManager.distinctId}\". " +
+                    "The session has been automatically reset. Use alias() to link the new ID to the existing one if intentional.",
             )
         }
         scope.launch {

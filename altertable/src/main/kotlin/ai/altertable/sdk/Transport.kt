@@ -27,6 +27,8 @@ import java.io.IOException
 
 private const val BACKOFF_BASE_MS = 1000L
 private const val BACKOFF_MAX_MS = 10000L
+private const val HTTP_SERVER_ERROR_MIN = 500
+private const val HTTP_SERVER_ERROR_MAX = 599
 
 internal class Transport(
     private val apiKey: String,
@@ -55,6 +57,7 @@ internal class Transport(
         }
     }
 
+    @Suppress("ThrowsCount")
     internal suspend fun post(payload: ApiPayload) {
         retryWithBackoff(maxRetries) { attempt ->
             try {
@@ -90,7 +93,7 @@ internal class Transport(
                             "API Error: $status",
                         )
                     // Retry on 5xx errors
-                    if (status in 500..599) {
+                    if (status in HTTP_SERVER_ERROR_MIN..HTTP_SERVER_ERROR_MAX) {
                         throw RetryableError(AltertableException(err))
                     }
                     throw AltertableException(err)
@@ -100,6 +103,7 @@ internal class Transport(
             } catch (e: IOException) {
                 throw RetryableError(AltertableException(AltertableError.Network("Network request failed", e)))
             } catch (e: Throwable) {
+                @Suppress("TooGenericExceptionCaught")
                 throw RetryableError(AltertableException(AltertableError.Network("Network request failed", e)))
             }
         }
@@ -122,6 +126,7 @@ private class RetryableError(val exception: AltertableException) : Exception(exc
  * @param operation The suspend operation to retry. Receives the current attempt number (0-indexed).
  * @throws AltertableException The last error encountered if all retries are exhausted
  */
+@Suppress("ThrowsCount")
 private suspend fun <T> retryWithBackoff(
     maxRetries: Int,
     operation: suspend (attempt: Int) -> T,
@@ -145,7 +150,9 @@ private suspend fun <T> retryWithBackoff(
         }
     }
 
-    throw AltertableException(lastError ?: AltertableError.Network("Network request failed", Exception("Unknown error")))
+    throw AltertableException(
+        lastError ?: AltertableError.Network("Network request failed", Exception("Unknown error")),
+    )
 }
 
 /**

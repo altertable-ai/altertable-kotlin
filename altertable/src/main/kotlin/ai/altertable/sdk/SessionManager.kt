@@ -25,9 +25,6 @@ internal class SessionManager(
     internal val sessionId: String
         get() = _sessionId ?: error("SessionManager not initialized. Call initialize() first.")
 
-    private val lastEventAt: Long
-        get() = _lastEventAt ?: error("SessionManager not initialized. Call initialize() first.")
-
     private fun generateSessionId(): String = "${PREFIX_SESSION_ID}-${Uuid.random()}"
 
     internal suspend fun initialize() {
@@ -62,6 +59,8 @@ internal class SessionManager(
         _sessionId = generateSessionId()
         storage[sessionIdKey] = checkNotNull(_sessionId) { "sessionId should be set after generateSessionId()" }
         _lastEventAt = clock.now().toEpochMilliseconds()
-        storage[lastEventAtKey] = checkNotNull(_lastEventAt) { "lastEventAt should be set after clock.now()" }.toString()
+        storage[lastEventAtKey] = checkNotNull(_lastEventAt) {
+            "lastEventAt should be set after clock.now()"
+        }.toString()
     }
 }

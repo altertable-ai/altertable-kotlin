@@ -1,8 +1,11 @@
+@file:OptIn(AltertableInternal::class)
+
 package ai.altertable.sdk
 
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -47,7 +50,7 @@ class ConsentAndQueueTest {
             val testDispatcher = UnconfinedTestDispatcher(testScheduler)
             val config = AltertableConfig(
                 apiKey = "test-key",
-                trackingConsent = TrackingConsentState.DENIED,
+                tracking = TrackingConfig(consent = TrackingConsent.DENIED),
                 dispatcher = testDispatcher,
             )
             val client = AltertableClient(config)
@@ -68,7 +71,6 @@ class ConsentAndQueueTest {
         val transport = Transport(
             apiKey = config.apiKey,
             baseUrl = config.network.baseUrl,
-            environment = config.environment,
             dispatcher = config.dispatcher,
             requestTimeout = config.network.requestTimeout,
             maxRetries = config.network.maxRetries,
@@ -98,12 +100,12 @@ class ConsentAndQueueTest {
     @Test
     fun `test queue persistence across client restarts`() =
         runTest {
-            val testDispatcher = UnconfinedTestDispatcher(testScheduler)
+            val testDispatcher = StandardTestDispatcher(testScheduler)
             val storage = InMemoryStorage()
             val config =
                 AltertableConfig(
                     apiKey = "test-key",
-                    trackingConsent = TrackingConsentState.PENDING,
+                    tracking = TrackingConfig(consent = TrackingConsent.PENDING),
                     dispatcher = testDispatcher,
                 )
             val client1 = AltertableClient(config, storage)
@@ -112,6 +114,8 @@ class ConsentAndQueueTest {
             client1.close()
 
             val client2 = AltertableClient(config, storage)
+            // Wait for client2 init (identityManager, sessionManager, eventQueue.initialize())
+            advanceUntilIdle()
             val queueItems = client2.eventQueue.flush()
             assertEquals(1, queueItems.size)
             assertEquals("PersistedEvent", (queueItems[0] as ApiPayload.Track).payload.event)

@@ -21,30 +21,34 @@ internal class EventQueue(
     }
 
     internal suspend fun enqueue(event: ApiPayload, persist: Boolean = false) {
-        mutex.withLock {
-            if (queue.size >= maxSize) {
-                queue.removeFirst()
+        val toSave =
+            mutex.withLock {
+                if (queue.size >= maxSize) {
+                    queue.removeFirst()
+                }
+                queue.addLast(event)
+                if (persist) queue.toList() else null
             }
-            queue.addLast(event)
-            if (persist) {
-                queueStorage?.save(queue.toList())
-            }
+        if (toSave != null) {
+            queueStorage?.save(toSave)
         }
     }
 
     internal suspend fun flush(): List<ApiPayload> {
-        mutex.withLock {
-            val items = queue.toList()
-            queue.clear()
-            queueStorage?.save(emptyList())
-            return items
-        }
+        val items =
+            mutex.withLock {
+                val result = queue.toList()
+                queue.clear()
+                result
+            }
+        queueStorage?.save(emptyList())
+        return items
     }
 
     internal suspend fun clear() {
         mutex.withLock {
             queue.clear()
-            queueStorage?.save(emptyList())
         }
+        queueStorage?.save(emptyList())
     }
 }

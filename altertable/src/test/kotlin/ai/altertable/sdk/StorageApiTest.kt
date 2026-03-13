@@ -1,12 +1,15 @@
+@file:OptIn(AltertableInternal::class)
+
 package ai.altertable.sdk
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlinx.coroutines.runBlocking
 
 class StorageApiTest {
     @Test
-    fun testInMemoryStorage() {
+    fun testInMemoryStorage() = runBlocking {
         val storage = InMemoryStorage()
         assertNull(storage["key1"])
 

@@ -30,7 +30,7 @@ internal annotation class AltertableDsl
 public class NetworkConfigBuilder {
     public var baseUrl: String = "https://api.altertable.ai"
     public var requestTimeout: Duration = 10.seconds
-    public var maxRetries: Int = 3
+    public var maxRetries: Int = NetworkConfig().maxRetries
 
     internal fun build(): NetworkConfig = NetworkConfig(
         baseUrl = baseUrl,
@@ -51,7 +51,7 @@ public class TrackingConfigBuilder {
     public var consent: TrackingConsent = TrackingConsent.GRANTED
     public var captureScreenViews: Boolean = true
     public var flushOnBackground: Boolean = true
-    public var maxQueueSize: Int = 1_000
+    public var maxQueueSize: Int = TrackingConfig().maxQueueSize
 
     internal fun build(): TrackingConfig = TrackingConfig(
         consent = consent,

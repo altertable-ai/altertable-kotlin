@@ -1,3 +1,5 @@
+@file:OptIn(AltertableInternal::class)
+
 package ai.altertable.sdk
 
 import kotlin.test.Test
@@ -5,12 +7,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
 
 class IdentityManagerTest {
     @Test
-    fun testIdentifyAndReset() {
+    fun testIdentifyAndReset() = runBlocking {
         val storage = InMemoryStorage()
         val manager = IdentityManager(storage, "test-api-key", "test-env")
+        manager.initialize()
 
         val initialDistinctId = manager.distinctId
         val initialDeviceId = manager.deviceId
@@ -29,9 +33,10 @@ class IdentityManagerTest {
     }
 
     @Test
-    fun testReservedIds() {
+    fun testReservedIds() = runBlocking {
         val storage = InMemoryStorage()
         val manager = IdentityManager(storage, "test-api-key", "test-env")
+        manager.initialize()
 
         val initialDistinctId = manager.distinctId
         manager.identify("null")

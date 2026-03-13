@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
+@OptIn(AltertableInternal::class)
 class AltertableClientLifecycleTest {
     @Test
     fun `setup returns configured client`() {

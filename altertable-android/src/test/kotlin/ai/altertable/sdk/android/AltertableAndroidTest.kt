@@ -5,9 +5,9 @@ import ai.altertable.sdk.AltertableConfig
 import ai.altertable.sdk.TrackingConfig
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.Assert.assertNotNull
+import org.junit.Before
+import org.junit.Test
 import org.robolectric.RobolectricTestRunner
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -17,7 +17,7 @@ import org.robolectric.annotation.Config
 class AltertableAndroidTest {
     private lateinit var application: Application
 
-    @BeforeEach
+    @Before
     fun setup() {
         application = ApplicationProvider.getApplicationContext() as Application
     }

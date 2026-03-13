@@ -1,12 +1,15 @@
+@file:OptIn(ai.altertable.sdk.AltertableInternal::class)
+
 package ai.altertable.sdk.android
 
 import ai.altertable.sdk.ContextProperties
 import androidx.test.core.app.ApplicationProvider
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import android.content.Context as AndroidContext
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
 import org.robolectric.RobolectricTestRunner
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -16,9 +19,9 @@ import org.robolectric.annotation.Config
 class AndroidContextProviderTest {
     private lateinit var provider: AndroidContextProvider
 
-    @BeforeEach
+    @Before
     fun setup() {
-        val context = ApplicationProvider.getApplicationContext()
+        val context = ApplicationProvider.getApplicationContext<AndroidContext>()
         provider = AndroidContextProvider(context)
     }
 
