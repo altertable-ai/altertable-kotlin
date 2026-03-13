@@ -102,8 +102,6 @@ internal class Transport(
                 throw e
             } catch (e: IOException) {
                 throw RetryableError(AltertableException(AltertableError.Network("Network request failed", e)))
-            } catch (e: Exception) {
-                throw RetryableError(AltertableException(AltertableError.Network("Network request failed", e)))
             }
         }
     }
