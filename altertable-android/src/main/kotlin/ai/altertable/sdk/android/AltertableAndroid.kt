@@ -13,7 +13,8 @@ import androidx.lifecycle.ProcessLifecycleOwner
  * Initializes the shared [Altertable] instance with:
  * - [AndroidContextProvider] for device and app properties
  * - [SharedPreferencesStorage] for persistence
- * - [ProcessLifecycleObserver] for flush on app background (when [AltertableConfig.tracking.flushOnBackground] is true)
+ * - [ProcessLifecycleObserver] for flush on app background
+ *   (when [AltertableConfig.tracking.flushOnBackground] is true)
  * - [ActivityScreenTracker] for automatic screen view tracking (when [AltertableConfig.tracking.captureScreenViews] is true)
  *
  * Call [setup] from your [Application.onCreate].

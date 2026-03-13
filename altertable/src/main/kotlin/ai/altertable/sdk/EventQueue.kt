@@ -20,7 +20,10 @@ internal class EventQueue(
         }
     }
 
-    internal suspend fun enqueue(event: ApiPayload, persist: Boolean = false) {
+    internal suspend fun enqueue(
+        event: ApiPayload,
+        persist: Boolean = false,
+    ) {
         val toSave =
             mutex.withLock {
                 if (queue.size >= maxSize) {

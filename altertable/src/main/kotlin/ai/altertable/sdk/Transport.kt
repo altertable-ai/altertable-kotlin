@@ -16,14 +16,14 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
-import kotlin.time.Duration
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
-import kotlin.random.Random
 import java.io.IOException
+import kotlin.random.Random
+import kotlin.time.Duration
 
 private const val BACKOFF_BASE_MS = 1000L
 private const val BACKOFF_MAX_MS = 10000L
@@ -45,17 +45,18 @@ internal class Transport(
             explicitNulls = false
         }
 
-    private val client = HttpClient(engine ?: OkHttp.create()) {
-        install(ContentNegotiation) { json(json) }
-        install(HttpTimeout) {
-            requestTimeoutMillis = requestTimeout.inWholeMilliseconds
-        }
-        if (engine == null) {
-            engine {
-                followRedirects = true
+    private val client =
+        HttpClient(engine ?: OkHttp.create()) {
+            install(ContentNegotiation) { json(json) }
+            install(HttpTimeout) {
+                requestTimeoutMillis = requestTimeout.inWholeMilliseconds
+            }
+            if (engine == null) {
+                engine {
+                    followRedirects = true
+                }
             }
         }
-    }
 
     @Suppress("ThrowsCount")
     internal suspend fun post(payload: ApiPayload) {
@@ -114,7 +115,9 @@ internal class Transport(
 /**
  * Wrapper for errors that should trigger a retry.
  */
-private class RetryableError(val exception: AltertableException) : Exception(exception)
+private class RetryableError(
+    val exception: AltertableException,
+) : Exception(exception)
 
 /**
  * Retries a suspend operation with exponential backoff and jitter.

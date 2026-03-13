@@ -37,7 +37,10 @@ public fun interface AltertableLogger {
  * Suitable for JVM/server environments. For Android, use [AndroidLogger] instead.
  */
 internal object DefaultLogger : AltertableLogger {
-    override fun log(level: LogLevel, message: String) {
+    override fun log(
+        level: LogLevel,
+        message: String,
+    ) {
         println("[Altertable/${level.name}] $message")
     }
 }

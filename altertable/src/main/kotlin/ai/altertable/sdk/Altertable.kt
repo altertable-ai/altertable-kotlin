@@ -1,12 +1,11 @@
 package ai.altertable.sdk
 
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.io.Closeable
 import kotlin.RequiresOptIn
 import kotlin.annotation.AnnotationRetention.BINARY
-import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Marks APIs that are internal to the Altertable SDK.

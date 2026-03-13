@@ -76,9 +76,10 @@ class IntegrationTest {
                 client.track("Item Viewed")
                 delay(1500)
 
-                val apiError = withTimeoutOrNull(1500) {
-                    client.errors.first { it is AltertableError.Api } as? AltertableError.Api
-                }
+                val apiError =
+                    withTimeoutOrNull(1500) {
+                        client.errors.first { it is AltertableError.Api } as? AltertableError.Api
+                    }
                 assertTrue(
                     apiError == null || apiError.status == 400 || apiError.status == 422,
                     "Expected null or 400/422 for invalid environment, got ${apiError?.status}",
@@ -101,9 +102,10 @@ class IntegrationTest {
                 client.track("Item Viewed")
                 delay(1500)
 
-                val apiError = withTimeoutOrNull(1500) {
-                    client.errors.first { it is AltertableError.Api } as? AltertableError.Api
-                }
+                val apiError =
+                    withTimeoutOrNull(1500) {
+                        client.errors.first { it is AltertableError.Api } as? AltertableError.Api
+                    }
                 assertTrue(
                     apiError == null || apiError.status == 401 || apiError.status == 403,
                     "Expected null or 401/403 for invalid API key, got ${apiError?.status}",

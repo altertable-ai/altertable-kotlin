@@ -10,7 +10,6 @@ import kotlinx.datetime.Instant
 import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 private fun trackPayload() =
@@ -49,14 +48,15 @@ class TransportTest {
                 network = NetworkConfig(baseUrl = "https://api.example.com"),
                 environment = "test",
             )
-        val transport = Transport(
-            apiKey = config.apiKey,
-            baseUrl = config.network.baseUrl,
-            dispatcher = config.dispatcher,
-            requestTimeout = config.network.requestTimeout,
-            maxRetries = config.network.maxRetries,
-            engine = engine,
-        )
+        val transport =
+            Transport(
+                apiKey = config.apiKey,
+                baseUrl = config.network.baseUrl,
+                dispatcher = config.dispatcher,
+                requestTimeout = config.network.requestTimeout,
+                maxRetries = config.network.maxRetries,
+                engine = engine,
+            )
         try {
             runBlocking { transport.post(trackPayload()) }
         } finally {
@@ -84,14 +84,15 @@ class TransportTest {
                 network = NetworkConfig(baseUrl = "https://api.example.com"),
                 environment = "test",
             )
-        val transport = Transport(
-            apiKey = config.apiKey,
-            baseUrl = config.network.baseUrl,
-            dispatcher = config.dispatcher,
-            requestTimeout = config.network.requestTimeout,
-            maxRetries = config.network.maxRetries,
-            engine = engine,
-        )
+        val transport =
+            Transport(
+                apiKey = config.apiKey,
+                baseUrl = config.network.baseUrl,
+                dispatcher = config.dispatcher,
+                requestTimeout = config.network.requestTimeout,
+                maxRetries = config.network.maxRetries,
+                engine = engine,
+            )
         try {
             val exception =
                 assertThrows(AltertableException::class.java) {
@@ -125,14 +126,15 @@ class TransportTest {
                 network = NetworkConfig(baseUrl = "https://api.example.com", maxRetries = 0),
                 environment = "test",
             )
-        val transport = Transport(
-            apiKey = config.apiKey,
-            baseUrl = config.network.baseUrl,
-            dispatcher = config.dispatcher,
-            requestTimeout = config.network.requestTimeout,
-            maxRetries = config.network.maxRetries,
-            engine = engine,
-        )
+        val transport =
+            Transport(
+                apiKey = config.apiKey,
+                baseUrl = config.network.baseUrl,
+                dispatcher = config.dispatcher,
+                requestTimeout = config.network.requestTimeout,
+                maxRetries = config.network.maxRetries,
+                engine = engine,
+            )
         try {
             val exception =
                 assertThrows(AltertableException::class.java) {
@@ -183,14 +185,15 @@ class TransportTest {
                 network = NetworkConfig(baseUrl = "https://api.example.com", maxRetries = 2),
                 environment = "test",
             )
-        val transport = Transport(
-            apiKey = config.apiKey,
-            baseUrl = config.network.baseUrl,
-            dispatcher = config.dispatcher,
-            requestTimeout = config.network.requestTimeout,
-            maxRetries = config.network.maxRetries,
-            engine = engine,
-        )
+        val transport =
+            Transport(
+                apiKey = config.apiKey,
+                baseUrl = config.network.baseUrl,
+                dispatcher = config.dispatcher,
+                requestTimeout = config.network.requestTimeout,
+                maxRetries = config.network.maxRetries,
+                engine = engine,
+            )
         try {
             runBlocking { transport.post(trackPayload()) }
             assertEquals(2, attemptCount.get())
@@ -219,14 +222,15 @@ class TransportTest {
                 network = NetworkConfig(baseUrl = "https://api.example.com"),
                 environment = "test",
             )
-        val transport = Transport(
-            apiKey = config.apiKey,
-            baseUrl = config.network.baseUrl,
-            dispatcher = config.dispatcher,
-            requestTimeout = config.network.requestTimeout,
-            maxRetries = config.network.maxRetries,
-            engine = engine,
-        )
+        val transport =
+            Transport(
+                apiKey = config.apiKey,
+                baseUrl = config.network.baseUrl,
+                dispatcher = config.dispatcher,
+                requestTimeout = config.network.requestTimeout,
+                maxRetries = config.network.maxRetries,
+                engine = engine,
+            )
         try {
             val exception =
                 assertThrows(AltertableException::class.java) {

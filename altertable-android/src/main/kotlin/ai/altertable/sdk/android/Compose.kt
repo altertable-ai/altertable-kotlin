@@ -33,6 +33,7 @@ public val LocalAltertable = compositionLocalOf<Altertable> {
  * @param client The Altertable client instance.
  * @param content The composable content that will have access to the client.
  */
+@Suppress("FunctionName")
 @Composable
 public fun ProvideAltertable(
     client: Altertable,
@@ -75,6 +76,7 @@ public fun Modifier.screenView(
  * @param name The screen name to track.
  * @param properties Optional additional properties.
  */
+@Suppress("FunctionName")
 @Composable
 public fun TrackScreenView(
     name: String,
