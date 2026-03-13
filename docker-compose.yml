@@ -1,0 +1,8 @@
+services:
+  altertable-mock:
+    image: ghcr.io/altertable-ai/altertable-mock:latest
+    ports:
+      - "15001:15001"
+    environment:
+      ALTERTABLE_MOCK_API_KEYS: "valid_api_key"
+      ALTERTABLE_MOCK_ENVIRONMENTS: "production,integration_env"
