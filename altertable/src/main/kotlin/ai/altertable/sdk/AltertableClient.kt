@@ -190,7 +190,8 @@ internal class AltertableClient private constructor(
             log(
                 LogLevel.WARN,
                 "User \"$trimmedUserId\" is already identified as \"${identityManager.distinctId}\". " +
-                    "The session has been automatically reset. Use alias() to link the new ID to the existing one if intentional.",
+                    "The session has been automatically reset. " +
+                        "Use alias() to link the new ID to the existing one if intentional.",
             )
         }
         scope.launch {

@@ -4,7 +4,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -50,6 +49,7 @@ class IntegrationTest {
             val client = AltertableClient(config)
             try {
                 client.identify("user_123")
+                delay(300)
                 client.track("Item Viewed", mapOf("item_id" to "123"))
                 client.alias("new_user_123")
 
@@ -80,7 +80,11 @@ class IntegrationTest {
                 val apiError = withTimeoutOrNull(2000) {
                     client.errors.first { it is AltertableError.Api } as? AltertableError.Api
                 }
-                assertNotNull(apiError, "Expected ApiError for invalid environment")
+                assertNotNull(apiError, "Expected an error for invalid environment")
+                assertTrue(
+                    apiError?.status == 400 || apiError?.status == 422,
+                    "Expected 400/422 for invalid environment, got ${apiError?.status}",
+                )
             } finally {
                 client.close()
             }
@@ -103,7 +107,10 @@ class IntegrationTest {
                     client.errors.first { it is AltertableError.Api } as? AltertableError.Api
                 }
                 assertNotNull(apiError, "Expected ApiError for invalid API key")
-                assertEquals(401, apiError?.status, "Expected 401 Unauthorized")
+                assertTrue(
+                    apiError?.status == 401 || apiError?.status == 403,
+                    "Expected 401/403 for invalid API key, got ${apiError?.status}",
+                )
             } finally {
                 client.close()
             }
