@@ -80,7 +80,7 @@ class ContextAndTraitsTest {
         }
 
     @Test
-    fun `screen delegates to track with screen event and \$screen_name`() =
+    fun `screen delegates to track with screen event and $screen_name`() =
         runTest {
             val testDispatcher = UnconfinedTestDispatcher(testScheduler)
             val config =
