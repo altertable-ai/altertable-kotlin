@@ -32,7 +32,7 @@ class ActivityScreenTrackerTest {
 
     @Test
     fun `test onActivityResumed calls screen without crashing`() {
-        val activity = Robolectric.setupActivity(TestActivity::class.java)
+        val activity = Robolectric.buildActivity(TestActivity::class.java).setup().get()
         tracker.onActivityResumed(activity)
         // Verify the call completes without error
         assertNotNull(tracker)
@@ -40,7 +40,7 @@ class ActivityScreenTrackerTest {
 
     @Test
     fun `test tracker handles activity lifecycle callbacks`() {
-        val activity = Robolectric.setupActivity(TestActivity::class.java)
+        val activity = Robolectric.buildActivity(TestActivity::class.java).setup().get()
         tracker.onActivityCreated(activity, null)
         tracker.onActivityStarted(activity)
         tracker.onActivityResumed(activity)

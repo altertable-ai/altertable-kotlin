@@ -242,4 +242,130 @@ class TransportTest {
             transport.close()
         }
     }
+
+    @Test
+    fun `postBatch sends single HTTP request for multiple payloads`() {
+        val requestCount =
+            java.util.concurrent.atomic
+                .AtomicInteger(0)
+        val engine =
+            MockEngine(
+                MockEngineConfig().apply {
+                    addHandler {
+                        requestCount.incrementAndGet()
+                        respond(
+                            content = "",
+                            status = HttpStatusCode.OK,
+                            headers = headersOf(),
+                        )
+                    }
+                },
+            )
+        val config =
+            AltertableConfig(
+                apiKey = "test-key",
+                network = NetworkConfig(baseUrl = "https://api.example.com"),
+                environment = "test",
+            )
+        val transport =
+            Transport(
+                apiKey = config.apiKey,
+                baseUrl = config.network.baseUrl,
+                dispatcher = config.dispatcher,
+                requestTimeout = config.network.requestTimeout,
+                maxRetries = config.network.maxRetries,
+                engine = engine,
+            )
+        try {
+            val p1 = trackPayload()
+            val p2 =
+                ApiPayload.Track(
+                    (p1 as ApiPayload.Track).payload.copy(event = "second"),
+                )
+            runBlocking { transport.postBatch(listOf(p1, p2)) }
+            assertEquals(1, requestCount.get())
+        } finally {
+            transport.close()
+        }
+    }
+
+    @Test
+    fun `retries on 429 then succeeds`() {
+        val attemptCount =
+            java.util.concurrent.atomic
+                .AtomicInteger(0)
+        val engine =
+            MockEngine(
+                MockEngineConfig().apply {
+                    addHandler {
+                        if (attemptCount.incrementAndGet() < 2) {
+                            respond(
+                                content = "",
+                                status = HttpStatusCode.TooManyRequests,
+                                headers = headersOf(),
+                            )
+                        } else {
+                            respond(
+                                content = "",
+                                status = HttpStatusCode.OK,
+                                headers = headersOf(),
+                            )
+                        }
+                    }
+                },
+            )
+        val config =
+            AltertableConfig(
+                apiKey = "test-key",
+                network = NetworkConfig(baseUrl = "https://api.example.com", maxRetries = 2),
+                environment = "test",
+            )
+        val transport =
+            Transport(
+                apiKey = config.apiKey,
+                baseUrl = config.network.baseUrl,
+                dispatcher = config.dispatcher,
+                requestTimeout = config.network.requestTimeout,
+                maxRetries = config.network.maxRetries,
+                engine = engine,
+            )
+        try {
+            runBlocking { transport.post(trackPayload()) }
+            assertEquals(2, attemptCount.get())
+        } finally {
+            transport.close()
+        }
+    }
+
+    @Test
+    fun `isRetryableHttpDeliveryError matches 429 and 5xx and network`() {
+        assertEquals(
+            true,
+            isRetryableHttpDeliveryError(
+                AltertableError.Api(429, "Too Many Requests", null, null, "msg"),
+            ),
+        )
+        assertEquals(
+            true,
+            isRetryableHttpDeliveryError(
+                AltertableError.Api(503, "Service Unavailable", null, null, "msg"),
+            ),
+        )
+        assertEquals(
+            false,
+            isRetryableHttpDeliveryError(
+                AltertableError.Api(400, "Bad Request", null, null, "msg"),
+            ),
+        )
+        assertEquals(
+            true,
+            isRetryableHttpDeliveryError(
+                AltertableError.Network("net", Exception("cause")),
+            ),
+        )
+        assertEquals(
+            false,
+            isRetryableHttpDeliveryError(AltertableError.Validation("x")),
+        )
+    }
 }

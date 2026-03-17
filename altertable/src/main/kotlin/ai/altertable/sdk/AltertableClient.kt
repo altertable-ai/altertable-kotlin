@@ -1,5 +1,6 @@
 package ai.altertable.sdk
 
+import io.ktor.client.engine.HttpClientEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -44,10 +45,34 @@ internal class AltertableClient private constructor(
     private val errorsFlow = MutableSharedFlow<AltertableError>(extraBufferCapacity = 64)
     override val errors: SharedFlow<AltertableError> = errorsFlow.asSharedFlow()
 
+    private val eventBatcher =
+        EventBatcher(
+            scope = scope,
+            flushEventThreshold = initialConfig.tracking.flushEventThreshold,
+            flushIntervalMs = initialConfig.tracking.flushIntervalMs,
+            maxBatchSize = initialConfig.tracking.maxBatchSize,
+            send = { _, payloads ->
+                try {
+                    transport.postBatch(payloads)
+                } catch (e: AltertableException) {
+                    errorsFlow.emit(e.error)
+                    if (isRetryableHttpDeliveryError(e.error)) {
+                        throw e
+                    }
+                    for (payload in payloads) {
+                        eventQueue.enqueue(payload, persist = true)
+                    }
+                }
+            },
+        )
+
     init {
         for (integration in initialConfig.integrations) {
             val closeable = integration.create(this, initialConfig)
             installedIntegrations.add(closeable)
+        }
+        if (initialConfig.tracking.consent == TrackingConsent.GRANTED) {
+            eventBatcher.start()
         }
         // Initialize managers and restore consent asynchronously
         scope.launch {
@@ -56,9 +81,11 @@ internal class AltertableClient private constructor(
             eventQueue.initialize()
             // Restore consent from storage and update config
             val restoredConfig = restoreConsentFromStorage(configState.value, storage)
-            if (restoredConfig.tracking.consent != configState.value.tracking.consent) {
+            val previousConsent = configState.value.tracking.consent
+            if (restoredConfig.tracking.consent != previousConsent) {
                 configState.value = restoredConfig
                 trackingConsentState.value = restoredConfig.tracking.consent
+                applyConsentTransition(previousConsent, restoredConfig.tracking.consent)
             }
         }
     }
@@ -71,11 +98,13 @@ internal class AltertableClient private constructor(
      * @param config The [AltertableConfig] instance used to initialize the client.
      * @param storage Custom [Storage] implementation for persisting SDK state.
      * @param contextProvider Optional [ContextProvider] for device/system properties. Defaults to JVM context.
+     * @param httpClientEngine Optional Ktor engine (e.g. [io.ktor.client.engine.mock.MockEngine] in tests).
      */
     internal constructor(
         config: AltertableConfig,
         storage: Storage,
         contextProvider: ContextProvider = DefaultContextProvider,
+        httpClientEngine: HttpClientEngine? = null,
     ) : this(
         initialConfig = config,
         storage = storage,
@@ -98,6 +127,7 @@ internal class AltertableClient private constructor(
                 dispatcher = config.dispatcher,
                 requestTimeout = config.network.requestTimeout,
                 maxRetries = config.network.maxRetries,
+                engine = httpClientEngine,
             ),
     ) {
         require(config.apiKey.isNotBlank()) { "apiKey must not be blank" }
@@ -142,19 +172,29 @@ internal class AltertableClient private constructor(
     override fun configure(block: RuntimeConfigBuilder.() -> Unit) {
         scope.launch {
             val oldConsent = configState.value.tracking.consent
+            val oldTracking = configState.value.tracking
             val builder = RuntimeConfigBuilder().from(configState.value)
             builder.block()
             val newConfig = builder.applyTo(configState.value)
             configState.value = newConfig
+            val newTracking = newConfig.tracking
+            if (oldTracking.flushEventThreshold != newTracking.flushEventThreshold ||
+                oldTracking.flushIntervalMs != newTracking.flushIntervalMs ||
+                oldTracking.maxBatchSize != newTracking.maxBatchSize
+            ) {
+                eventBatcher.updateBatchSettings(
+                    previousFlushEventThreshold = oldTracking.flushEventThreshold,
+                    previousFlushIntervalMs = oldTracking.flushIntervalMs,
+                    flushEventThreshold = newTracking.flushEventThreshold,
+                    flushIntervalMs = newTracking.flushIntervalMs,
+                    maxBatchSize = newTracking.maxBatchSize,
+                )
+            }
             // Note: Transport is not recreated since apiKey/environment/dispatcher cannot change
             if (oldConsent != newConfig.tracking.consent) {
                 trackingConsentState.value = newConfig.tracking.consent
                 persistConsent(newConfig.tracking.consent)
-                when (newConfig.tracking.consent) {
-                    TrackingConsent.GRANTED -> flushQueue()
-                    TrackingConsent.DENIED -> eventQueue.clear()
-                    TrackingConsent.PENDING, TrackingConsent.DISMISSED -> { /* no-op */ }
-                }
+                applyConsentTransition(oldConsent, newConfig.tracking.consent)
             }
         }
     }
@@ -226,7 +266,7 @@ internal class AltertableClient private constructor(
     override fun updateTraits(traits: Map<String, Any>) {
         if (identityManager.anonymousId == null) {
             val error = AltertableError.Validation("User must be identified with identify() before updating traits.")
-            log(LogLevel.ERROR, error.message ?: "Validation failed")
+            log(LogLevel.ERROR, error.message)
             errorsFlow.tryEmit(error)
             return
         }
@@ -313,6 +353,10 @@ internal class AltertableClient private constructor(
                 persistConsent(TrackingConsent.GRANTED)
             }
             eventQueue.clear()
+            eventBatcher.clear()
+            if (resetTrackingConsent) {
+                eventBatcher.start()
+            }
         }
     }
 
@@ -335,7 +379,7 @@ internal class AltertableClient private constructor(
     ) {
         if (event.isBlank()) {
             val error = AltertableError.Validation("event name must not be blank")
-            log(LogLevel.ERROR, error.message ?: "Validation failed")
+            log(LogLevel.ERROR, error.message)
             errorsFlow.tryEmit(error)
             return
         }
@@ -371,14 +415,14 @@ internal class AltertableClient private constructor(
      * This is a fire-and-forget operation that does not block the calling thread.
      */
     override fun flush() {
-        scope.launch { flushQueue() }
+        scope.launch { flushAllPending() }
     }
 
     /**
      * Force-flushes any pending events in the queue and suspends until completion.
      */
     override suspend fun awaitFlush() {
-        flushQueue()
+        flushAllPending()
     }
 
     /**
@@ -389,6 +433,7 @@ internal class AltertableClient private constructor(
             closeable.close()
         }
         installedIntegrations.clear()
+        eventBatcher.stop()
         scope.cancel()
         transport.close()
     }
@@ -411,16 +456,12 @@ internal class AltertableClient private constructor(
         scope.launch {
             if (clearQueueFirst) {
                 eventQueue.clear()
+                eventBatcher.clear()
             }
             val configForConsent = configState.value
             when (configForConsent.tracking.consent) {
                 TrackingConsent.GRANTED -> {
-                    try {
-                        transport.post(finalPayload)
-                    } catch (e: AltertableException) {
-                        errorsFlow.emit(e.error)
-                        eventQueue.enqueue(finalPayload, persist = true)
-                    }
+                    eventBatcher.add(finalPayload)
                 }
                 TrackingConsent.PENDING, TrackingConsent.DISMISSED ->
                     eventQueue.enqueue(finalPayload, persist = true)
@@ -429,14 +470,49 @@ internal class AltertableClient private constructor(
         }
     }
 
+    /**
+     * Replays persisted consent queue into the batcher, then flushes that snapshot (JS parity).
+     */
     private suspend fun flushQueue() {
         val events = eventQueue.flush()
         for (evt in events) {
-            try {
-                transport.post(evt)
-            } catch (e: AltertableException) {
-                errorsFlow.emit(e.error)
-                eventQueue.enqueue(evt, persist = true)
+            eventBatcher.add(evt)
+        }
+        if (events.isNotEmpty()) {
+            eventBatcher.flush()
+        }
+    }
+
+    /** Drains the persisted consent queue and all in-memory outbound batches. */
+    private suspend fun flushAllPending() {
+        val events = eventQueue.flush()
+        for (evt in events) {
+            eventBatcher.add(evt)
+        }
+        eventBatcher.flush()
+    }
+
+    private suspend fun applyConsentTransition(
+        previous: TrackingConsent,
+        current: TrackingConsent,
+    ) {
+        when (current) {
+            TrackingConsent.GRANTED -> {
+                if (previous != TrackingConsent.GRANTED) {
+                    eventBatcher.start()
+                }
+                flushQueue()
+            }
+            TrackingConsent.DENIED -> {
+                eventQueue.clear()
+                eventBatcher.clear()
+                eventBatcher.stop()
+            }
+            TrackingConsent.PENDING, TrackingConsent.DISMISSED -> {
+                if (previous == TrackingConsent.GRANTED) {
+                    eventBatcher.flush()
+                    eventBatcher.stop()
+                }
             }
         }
     }

@@ -156,6 +156,9 @@ fabric.properties
 .idea/**/azureSettings.xml
 
 ### Kotlin ###
+# Kotlin compiler / IDE session files (local)
+.kotlin/
+
 # Compiled class file
 *.class
 

@@ -1,5 +1,6 @@
 package ai.altertable.sdk
 
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -7,6 +8,11 @@ import org.junit.jupiter.api.Test
 
 @OptIn(AltertableInternal::class)
 class AltertableClientLifecycleTest {
+    @AfterEach
+    fun tearDown() {
+        Altertable.shared?.close()
+    }
+
     @Test
     fun `setup returns configured client`() {
         val config = AltertableConfig(apiKey = "test-key")

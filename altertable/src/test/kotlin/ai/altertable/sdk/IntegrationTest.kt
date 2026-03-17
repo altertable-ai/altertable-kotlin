@@ -52,7 +52,8 @@ class IntegrationTest {
                 client.track("Item Viewed", mapOf("item_id" to "123"))
                 client.alias("new_user_123")
 
-                delay(1500)
+                client.awaitFlush()
+                delay(500)
 
                 val caughtError = withTimeoutOrNull(100) { client.errors.first() }
                 val errorMsg = "An error occurred: ${caughtError?.message}"
@@ -74,7 +75,8 @@ class IntegrationTest {
             val client = AltertableClient(config)
             try {
                 client.track("Item Viewed")
-                delay(1500)
+                client.awaitFlush()
+                delay(500)
 
                 val apiError =
                     withTimeoutOrNull(1500) {
@@ -100,7 +102,8 @@ class IntegrationTest {
             val client = AltertableClient(config)
             try {
                 client.track("Item Viewed")
-                delay(1500)
+                client.awaitFlush()
+                delay(500)
 
                 val apiError =
                     withTimeoutOrNull(1500) {
