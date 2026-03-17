@@ -144,7 +144,7 @@ client.track(
 
 #### `screen(name: String, properties: Map<String, Any> = emptyMap())`
 
-Tracks a screen view event. Automatically includes `screen_name` in properties.
+Tracks a screen view event. Automatically includes `$screen_name` in properties.
 
 ```kotlin
 client.screen(
