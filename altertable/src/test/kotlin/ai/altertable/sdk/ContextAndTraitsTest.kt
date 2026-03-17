@@ -28,9 +28,9 @@ class ContextAndTraitsTest {
             val queueItems = client.eventQueue.flush()
             assertEquals(1, queueItems.size)
             val trackPayload = (queueItems[0] as ApiPayload.Track).payload
-            assertTrue(trackPayload.properties.containsKey("\$lib"))
-            assertTrue(trackPayload.properties.containsKey("\$lib_version"))
-            assertTrue(trackPayload.properties.containsKey("os"))
+            assertTrue(trackPayload.properties.containsKey(ContextProperties.LIB))
+            assertTrue(trackPayload.properties.containsKey(ContextProperties.LIB_VERSION))
+            assertTrue(trackPayload.properties.containsKey(ContextProperties.OS))
             assertTrue(trackPayload.properties.containsKey("custom"))
         }
 
@@ -80,7 +80,7 @@ class ContextAndTraitsTest {
         }
 
     @Test
-    fun `screen delegates to track with screen event and screen_name`() =
+    fun `screen delegates to track with screen event and \$screen_name`() =
         runTest {
             val testDispatcher = UnconfinedTestDispatcher(testScheduler)
             val config =
@@ -96,8 +96,8 @@ class ContextAndTraitsTest {
             val queueItems = client.eventQueue.flush()
             assertEquals(1, queueItems.size)
             val trackPayload = (queueItems[0] as ApiPayload.Track).payload
-            assertEquals("\$screen", trackPayload.event)
-            assertTrue(trackPayload.properties.containsKey("screen_name"))
+            assertEquals(EVENT_SCREEN_VIEW, trackPayload.event)
+            assertTrue(trackPayload.properties.containsKey(ContextProperties.SCREEN_NAME))
             assertTrue(trackPayload.properties.containsKey("section"))
         }
 
