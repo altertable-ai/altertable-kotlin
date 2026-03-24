@@ -1,14 +1,18 @@
 package ai.altertable.sdk
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -35,10 +39,13 @@ internal class AltertableClient private constructor(
 ) : Altertable {
     private val configState = MutableStateFlow(initialConfig)
     private val scope = CoroutineScope(initialConfig.dispatcher + SupervisorJob())
+    private val periodicScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val superPropertiesMutex = Mutex()
     private val superPropertiesMap = mutableMapOf<String, Any>()
     override val superProperties = SuperProperties(scope, superPropertiesMutex, superPropertiesMap)
     private val installedIntegrations = mutableListOf<Closeable>()
+    private val flushMutex = Mutex()
+    private var periodicFlushJob: Job? = null
     private val trackingConsentState = MutableStateFlow(initialConfig.tracking.consent)
     override val trackingConsent: StateFlow<TrackingConsent> = trackingConsentState.asStateFlow()
     private val errorsFlow = MutableSharedFlow<AltertableError>(extraBufferCapacity = 64)
@@ -60,6 +67,7 @@ internal class AltertableClient private constructor(
                 configState.value = restoredConfig
                 trackingConsentState.value = restoredConfig.tracking.consent
             }
+            startPeriodicFlushLoop()
         }
     }
 
@@ -147,6 +155,7 @@ internal class AltertableClient private constructor(
             val newConfig = builder.applyTo(configState.value)
             configState.value = newConfig
             // Note: Transport is not recreated since apiKey/environment/dispatcher cannot change
+            startPeriodicFlushLoop()
             if (oldConsent != newConfig.tracking.consent) {
                 trackingConsentState.value = newConfig.tracking.consent
                 persistConsent(newConfig.tracking.consent)
@@ -385,10 +394,12 @@ internal class AltertableClient private constructor(
      * Closes the client and releases resources (coroutine scope, HTTP client, integrations).
      */
     override fun close() {
+        periodicFlushJob?.cancel()
         for (closeable in installedIntegrations) {
             closeable.close()
         }
         installedIntegrations.clear()
+        periodicScope.cancel()
         scope.cancel()
         transport.close()
     }
@@ -414,32 +425,77 @@ internal class AltertableClient private constructor(
             }
             val configForConsent = configState.value
             when (configForConsent.tracking.consent) {
-                TrackingConsent.GRANTED -> {
-                    try {
-                        transport.post(finalPayload)
-                    } catch (e: AltertableException) {
-                        errorsFlow.emit(e.error)
-                        eventQueue.enqueue(finalPayload, persist = true)
+                TrackingConsent.GRANTED,
+                TrackingConsent.PENDING,
+                TrackingConsent.DISMISSED,
+                -> {
+                    eventQueue.enqueue(finalPayload, persist = true)
+                    if (configForConsent.tracking.consent == TrackingConsent.GRANTED) {
+                        val size = eventQueue.size()
+                        if (size >= configForConsent.tracking.flushAt) {
+                            flushQueue()
+                        }
                     }
                 }
-                TrackingConsent.PENDING, TrackingConsent.DISMISSED ->
-                    eventQueue.enqueue(finalPayload, persist = true)
                 TrackingConsent.DENIED -> { /* drop */ }
             }
         }
     }
 
     private suspend fun flushQueue() {
-        val events = eventQueue.flush()
-        for (evt in events) {
-            try {
-                transport.post(evt)
-            } catch (e: AltertableException) {
-                errorsFlow.emit(e.error)
-                eventQueue.enqueue(evt, persist = true)
+        flushMutex.withLock {
+            val currentConfig = configState.value
+            if (currentConfig.tracking.consent != TrackingConsent.GRANTED) return
+
+            val events = eventQueue.flush()
+            if (events.isEmpty()) return
+
+            val failedEvents = mutableListOf<ApiPayload>()
+            events
+                .groupBy { it.endpoint }
+                .forEach { (endpoint, endpointEvents) ->
+                    endpointEvents
+                        .chunked(currentConfig.tracking.maxBatchSize)
+                        .forEach { chunk ->
+                            try {
+                                transport.postBatch(endpoint, chunk.map { it.body })
+                            } catch (e: AltertableException) {
+                                errorsFlow.emit(e.error)
+                                if (shouldRetry(e.error)) {
+                                    failedEvents.addAll(chunk)
+                                }
+                            }
+                        }
+                }
+
+            for (failed in failedEvents) {
+                eventQueue.enqueue(failed, persist = true)
             }
         }
     }
+
+    private fun startPeriodicFlushLoop() {
+        periodicFlushJob?.cancel()
+        periodicFlushJob =
+            periodicScope.launch {
+                while (isActive) {
+                    val trackingConfig = configState.value.tracking
+                    val intervalMs =
+                        minOf(trackingConfig.flushInterval.inWholeMilliseconds, trackingConfig.flushIntervalMillis)
+                    delay(intervalMs)
+                    if (configState.value.tracking.consent == TrackingConsent.GRANTED) {
+                        flushQueue()
+                    }
+                }
+            }
+    }
+
+    private fun shouldRetry(error: AltertableError): Boolean =
+        when (error) {
+            is AltertableError.Network -> true
+            is AltertableError.Api -> error.status in 500..599
+            is AltertableError.Validation -> false
+        }
 
     public companion object {
         @Volatile

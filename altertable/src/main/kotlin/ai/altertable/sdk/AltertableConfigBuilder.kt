@@ -52,6 +52,10 @@ public class TrackingConfigBuilder {
     public var consent: TrackingConsent = TrackingConsent.GRANTED
     public var captureScreenViews: Boolean = true
     public var flushOnBackground: Boolean = true
+    public var flushAt: Int = TrackingConfig().flushAt
+    public var flushInterval: Duration = TrackingConfig().flushInterval
+    public var flushIntervalMillis: Long = TrackingConfig().flushIntervalMillis
+    public var maxBatchSize: Int = TrackingConfig().maxBatchSize
     public var maxQueueSize: Int = TrackingConfig().maxQueueSize
 
     internal fun build(): TrackingConfig =
@@ -59,6 +63,10 @@ public class TrackingConfigBuilder {
             consent = consent,
             captureScreenViews = captureScreenViews,
             flushOnBackground = flushOnBackground,
+            flushAt = flushAt,
+            flushInterval = flushInterval,
+            flushIntervalMillis = flushIntervalMillis,
+            maxBatchSize = maxBatchSize,
             maxQueueSize = maxQueueSize,
         )
 
@@ -66,6 +74,10 @@ public class TrackingConfigBuilder {
         consent = config.consent
         captureScreenViews = config.captureScreenViews
         flushOnBackground = config.flushOnBackground
+        flushAt = config.flushAt
+        flushInterval = config.flushInterval
+        flushIntervalMillis = config.flushIntervalMillis
+        maxBatchSize = config.maxBatchSize
         maxQueueSize = config.maxQueueSize
         return this
     }

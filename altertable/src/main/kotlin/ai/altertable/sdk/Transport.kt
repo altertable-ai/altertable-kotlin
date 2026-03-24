@@ -60,20 +60,24 @@ internal class Transport(
 
     @Suppress("ThrowsCount")
     internal suspend fun post(payload: ApiPayload) {
+        postBatch(payload.endpoint, listOf(payload.body))
+    }
+
+    @Suppress("ThrowsCount")
+    internal suspend fun postBatch(
+        endpoint: String,
+        payloads: List<Any>,
+    ) {
+        if (payloads.isEmpty()) return
+
         retryWithBackoff(maxRetries) { attempt ->
             try {
                 val response =
                     withContext(dispatcher) {
-                        client.post("$baseUrl${payload.endpoint}") {
+                        client.post("$baseUrl$endpoint") {
                             header("X-API-Key", apiKey)
                             contentType(ContentType.Application.Json)
-                            setBody(
-                                when (payload) {
-                                    is ApiPayload.Track -> payload.payload as Any
-                                    is ApiPayload.Identify -> payload.payload as Any
-                                    is ApiPayload.Alias -> payload.payload as Any
-                                },
-                            )
+                            setBody(if (payloads.size == 1) payloads.first() else payloads)
                         }
                     }
                 if (!response.status.isSuccess()) {

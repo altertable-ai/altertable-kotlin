@@ -48,6 +48,11 @@ internal class EventQueue(
         return items
     }
 
+    internal suspend fun size(): Int =
+        mutex.withLock {
+            queue.size
+        }
+
     internal suspend fun clear() {
         mutex.withLock {
             queue.clear()

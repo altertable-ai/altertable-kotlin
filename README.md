@@ -97,6 +97,10 @@ Altertable.setup {
         consent = TrackingConsent.GRANTED
         captureScreenViews = true
         flushOnBackground = true
+        flushAt = 20
+        flushInterval = 30.seconds
+        flushIntervalMillis = 30000
+        maxBatchSize = 50
         maxQueueSize = 1000
     }
     
@@ -538,6 +542,10 @@ Initialize with an `AltertableConfig` object or use the DSL builder. All configu
 | `tracking.consent` | `TrackingConsent` | `GRANTED` | Initial tracking consent state. |
 | `tracking.captureScreenViews` | `Boolean` | `true` | Automatically track screen views on Android (Activity-based). |
 | `tracking.flushOnBackground` | `Boolean` | `true` | Automatically flush events when app goes into background (Android only). |
+| `tracking.flushAt` | `Int` | `20` | Flush threshold: when queued events reach this count, the queue is flushed. |
+| `tracking.flushInterval` | `Duration` | `30.seconds` | Periodic flush interval while the client is running. |
+| `tracking.flushIntervalMillis` | `Long` | `30000` | Millisecond-based flush interval override for Java callers. |
+| `tracking.maxBatchSize` | `Int` | `50` | Maximum number of events sent per batch request (grouped by event type). |
 | `tracking.maxQueueSize` | `Int` | `1000` | Maximum events to hold in the queue (older events dropped when exceeded). |
 
 ## Example App

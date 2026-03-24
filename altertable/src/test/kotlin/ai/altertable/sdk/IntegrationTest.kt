@@ -114,4 +114,39 @@ class IntegrationTest {
                 client.close()
             }
         }
+
+    @Test
+    fun `test pending queue is flushed in batches after consent grant`() =
+        runBlocking {
+            val config =
+                AltertableConfig(
+                    apiKey = "valid_api_key",
+                    environment = "production",
+                    network = NetworkConfig(baseUrl = BASE_URL, maxRetries = 0),
+                    tracking =
+                        TrackingConfig(
+                            consent = TrackingConsent.PENDING,
+                            flushAt = 2,
+                            maxBatchSize = 3,
+                        ),
+                )
+            val client = AltertableClient(config)
+            try {
+                repeat(7) { idx ->
+                    client.track("Batch Event $idx", mapOf("idx" to idx))
+                }
+                delay(500)
+
+                client.configure { tracking { consent = TrackingConsent.GRANTED } }
+                delay(2000)
+
+                val caughtError = withTimeoutOrNull(100) { client.errors.first() }
+                assertTrue(
+                    caughtError == null,
+                    "Expected no error while flushing queued batches, got: ${caughtError?.message}",
+                )
+            } finally {
+                client.close()
+            }
+        }
 }

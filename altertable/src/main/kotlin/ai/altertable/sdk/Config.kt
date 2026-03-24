@@ -98,14 +98,29 @@ public data class NetworkConfig(
  * @param consent The initial tracking consent state.
  * @param captureScreenViews Whether to enable screen view auto-capture (Android only).
  * @param flushOnBackground Whether to flush pending events when the app goes into the background.
+ * @param flushAt Flush threshold: once queued events reach this count, a flush is triggered.
+ * @param flushInterval Periodic flush interval.
+ * @param flushIntervalMillis Convenience override for [flushInterval] in milliseconds.
+ * @param maxBatchSize Maximum number of events per batch request and endpoint/type group.
  * @param maxQueueSize Maximum events to hold in the queue (older events dropped when exceeded).
  */
 public data class TrackingConfig(
     public val consent: TrackingConsent = TrackingConsent.GRANTED,
     public val captureScreenViews: Boolean = true,
     public val flushOnBackground: Boolean = true,
+    public val flushAt: Int = 20,
+    public val flushInterval: Duration = 30.seconds,
+    public val flushIntervalMillis: Long = 30_000,
+    public val maxBatchSize: Int = 50,
     public val maxQueueSize: Int = 1_000,
-)
+) {
+    init {
+        require(flushAt > 0) { "flushAt must be > 0" }
+        require(flushInterval.inWholeMilliseconds > 0) { "flushInterval must be > 0" }
+        require(flushIntervalMillis > 0) { "flushIntervalMillis must be > 0" }
+        require(maxBatchSize > 0) { "maxBatchSize must be > 0" }
+    }
+}
 
 /**
  * Configuration for the Altertable SDK client.
