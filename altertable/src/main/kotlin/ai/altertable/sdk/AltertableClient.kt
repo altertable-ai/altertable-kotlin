@@ -493,11 +493,14 @@ internal class AltertableClient private constructor(
     private fun shouldRetry(error: AltertableError): Boolean =
         when (error) {
             is AltertableError.Network -> true
-            is AltertableError.Api -> error.status in 500..599
+            is AltertableError.Api -> error.status in HTTP_SERVER_ERROR_MIN..HTTP_SERVER_ERROR_MAX
             is AltertableError.Validation -> false
         }
 
     public companion object {
+        private const val HTTP_SERVER_ERROR_MIN = 500
+        private const val HTTP_SERVER_ERROR_MAX = 599
+
         @Volatile
         private var instance: AltertableClient? = null
 
