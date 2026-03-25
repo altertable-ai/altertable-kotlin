@@ -8,6 +8,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -17,6 +18,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -29,6 +31,20 @@ private const val BACKOFF_BASE_MS = 1000L
 private const val BACKOFF_MAX_MS = 10000L
 private const val HTTP_SERVER_ERROR_MIN = 500
 private const val HTTP_SERVER_ERROR_MAX = 599
+private const val HTTP_STATUS_TOO_MANY_REQUESTS = 429
+
+/**
+ * Whether a failed delivery should be retried at the HTTP layer and requeued by the batcher.
+ * True for network failures, 429, and 5xx.
+ */
+internal fun isRetryableHttpDeliveryError(error: AltertableError): Boolean =
+    when (error) {
+        is AltertableError.Network -> true
+        is AltertableError.Api ->
+            error.status == HTTP_STATUS_TOO_MANY_REQUESTS ||
+                error.status in HTTP_SERVER_ERROR_MIN..HTTP_SERVER_ERROR_MAX
+        else -> false
+    }
 
 internal class Transport(
     private val apiKey: String,
@@ -58,6 +74,34 @@ internal class Transport(
             }
         }
 
+    /**
+     * Parses a non-success HTTP response and throws either [RetryableError] (429 / 5xx) or [AltertableException].
+     */
+    private suspend fun throwOnUnsuccessfulResponse(response: HttpResponse): Nothing {
+        val status = response.status.value
+        var errorCode: String? = null
+        try {
+            val errorJson = json.parseToJsonElement(response.bodyAsText()) as? JsonObject
+            errorCode = errorJson?.get("error")?.jsonPrimitive?.contentOrNull
+        } catch (_: SerializationException) {
+            // Ignore JSON parsing error - errorCode remains null
+        }
+        val err =
+            AltertableError.Api(
+                status,
+                response.status.description,
+                errorCode,
+                null,
+                "API Error: $status",
+            )
+        if (status == HTTP_STATUS_TOO_MANY_REQUESTS ||
+            status in HTTP_SERVER_ERROR_MIN..HTTP_SERVER_ERROR_MAX
+        ) {
+            throw RetryableError(AltertableException(err))
+        }
+        throw AltertableException(err)
+    }
+
     @Suppress("ThrowsCount")
     internal suspend fun post(payload: ApiPayload) {
         retryWithBackoff(maxRetries) { attempt ->
@@ -77,27 +121,7 @@ internal class Transport(
                         }
                     }
                 if (!response.status.isSuccess()) {
-                    val status = response.status.value
-                    var errorCode: String? = null
-                    try {
-                        val errorJson = json.parseToJsonElement(response.bodyAsText()) as? JsonObject
-                        errorCode = errorJson?.get("error")?.jsonPrimitive?.contentOrNull
-                    } catch (_: SerializationException) {
-                        // Ignore JSON parsing error - errorCode remains null
-                    }
-                    val err =
-                        AltertableError.Api(
-                            status,
-                            response.status.description,
-                            errorCode,
-                            null,
-                            "API Error: $status",
-                        )
-                    // Retry on 5xx errors
-                    if (status in HTTP_SERVER_ERROR_MIN..HTTP_SERVER_ERROR_MAX) {
-                        throw RetryableError(AltertableException(err))
-                    }
-                    throw AltertableException(err)
+                    throwOnUnsuccessfulResponse(response)
                 }
             } catch (e: AltertableException) {
                 throw e
@@ -106,6 +130,56 @@ internal class Transport(
             }
         }
     }
+
+    @Suppress("ThrowsCount")
+    internal suspend fun postBatch(payloads: List<ApiPayload>) {
+        if (payloads.isEmpty()) {
+            return
+        }
+        val endpoint = payloads.first().endpoint
+        require(payloads.all { it.endpoint == endpoint }) {
+            "postBatch requires payloads for a single endpoint"
+        }
+        val jsonBody = encodePayloadsAsJsonArray(payloads)
+        retryWithBackoff(maxRetries) {
+            try {
+                val response =
+                    withContext(dispatcher) {
+                        client.post("$baseUrl$endpoint") {
+                            header("X-API-Key", apiKey)
+                            contentType(ContentType.Application.Json)
+                            setBody(jsonBody)
+                        }
+                    }
+                if (!response.status.isSuccess()) {
+                    throwOnUnsuccessfulResponse(response)
+                }
+            } catch (e: AltertableException) {
+                throw e
+            } catch (e: IOException) {
+                throw RetryableError(AltertableException(AltertableError.Network("Network request failed", e)))
+            }
+        }
+    }
+
+    private fun encodePayloadsAsJsonArray(payloads: List<ApiPayload>): String =
+        when (payloads.first()) {
+            is ApiPayload.Track ->
+                json.encodeToString(
+                    ListSerializer(TrackPayload.serializer()),
+                    payloads.map { (it as ApiPayload.Track).payload },
+                )
+            is ApiPayload.Identify ->
+                json.encodeToString(
+                    ListSerializer(IdentifyPayload.serializer()),
+                    payloads.map { (it as ApiPayload.Identify).payload },
+                )
+            is ApiPayload.Alias ->
+                json.encodeToString(
+                    ListSerializer(AliasPayload.serializer()),
+                    payloads.map { (it as ApiPayload.Alias).payload },
+                )
+        }
 
     override fun close() {
         client.close()

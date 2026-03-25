@@ -1,9 +1,16 @@
-@file:OptIn(AltertableInternal::class)
+@file:OptIn(AltertableInternal::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 
 package ai.altertable.sdk
 
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.MockEngineConfig
+import io.ktor.client.engine.mock.respond
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,43 +19,104 @@ import org.junit.jupiter.api.Test
 
 @Suppress("UnusedPrivateProperty")
 class ConsentAndQueueTest {
+    private companion object {
+        private const val CLIENT_INIT_SETTLE_MS = 400L
+        private const val ASYNC_SCOPE_SETTLE_MS = 500L
+        private const val TRACK_ENQUEUE_SETTLE_MS = 100L
+    }
+
     @Test
     fun `test event queue buffering and flush on consent granted`() =
-        runTest {
-            val testDispatcher = UnconfinedTestDispatcher(testScheduler)
+        runBlocking {
+            val engine =
+                MockEngine(
+                    MockEngineConfig().apply {
+                        addHandler {
+                            respond(
+                                content = "",
+                                status = HttpStatusCode.OK,
+                                headers = headersOf(),
+                            )
+                        }
+                    },
+                )
             val config =
                 AltertableConfig(
                     apiKey = "test-key",
                     tracking = TrackingConfig(consent = TrackingConsent.PENDING),
-                    dispatcher = testDispatcher,
+                    dispatcher = Dispatchers.Default,
                 )
-            val client = AltertableClient(config)
+            val client = AltertableClient(config, InMemoryStorage(), httpClientEngine = engine)
+            try {
+                delay(CLIENT_INIT_SETTLE_MS)
+                client.track("TestEvent")
+                delay(TRACK_ENQUEUE_SETTLE_MS)
 
-            // Track an event while pending
-            client.track("TestEvent")
-            advanceUntilIdle()
+                val queueItems = client.eventQueue.flush()
+                assertEquals(1, queueItems.size)
+                val trackPayload = queueItems[0] as ApiPayload.Track
+                assertEquals("/track", trackPayload.endpoint)
+                assertEquals("TestEvent", trackPayload.payload.event)
 
-            val queueItems = client.eventQueue.flush()
-            assertEquals(1, queueItems.size)
-            val trackPayload = queueItems[0] as ApiPayload.Track
-            assertEquals("/track", trackPayload.endpoint)
-            assertEquals("TestEvent", trackPayload.payload.event)
+                client.eventQueue.enqueue(queueItems[0])
 
-            // Put it back
-            client.eventQueue.enqueue(queueItems[0])
+                client.configure { tracking { consent = TrackingConsent.GRANTED } }
+                delay(ASYNC_SCOPE_SETTLE_MS)
+                client.awaitFlush()
 
-            // Now grant consent.
-            client.configure { tracking { consent = TrackingConsent.GRANTED } }
-            advanceUntilIdle()
+                val finalQueue = client.eventQueue.flush()
+                assertEquals(0, finalQueue.size)
+            } finally {
+                client.close()
+            }
+        }
 
-            val finalQueue = client.eventQueue.flush()
-            assertEquals(0, finalQueue.size)
+    @Test
+    fun `non-retryable batch failure persists payloads to queue`() =
+        runBlocking {
+            val engine =
+                MockEngine(
+                    MockEngineConfig().apply {
+                        addHandler {
+                            respond(
+                                content = "",
+                                status = HttpStatusCode.BadRequest,
+                                headers = headersOf(),
+                            )
+                        }
+                    },
+                )
+            val config =
+                AltertableConfig(
+                    apiKey = "test-key",
+                    tracking =
+                        TrackingConfig(
+                            consent = TrackingConsent.GRANTED,
+                            flushEventThreshold = 1,
+                            flushIntervalMs = 3_600_000L,
+                        ),
+                    network = NetworkConfig(baseUrl = "https://api.example.com", maxRetries = 0),
+                    dispatcher = Dispatchers.Default,
+                )
+            val client = AltertableClient(config, InMemoryStorage(), httpClientEngine = engine)
+            try {
+                delay(CLIENT_INIT_SETTLE_MS)
+                client.track("RequeuedEvent")
+                delay(TRACK_ENQUEUE_SETTLE_MS)
+                client.awaitFlush()
+
+                val queueItems = client.eventQueue.flush()
+                assertEquals(1, queueItems.size)
+                assertEquals("RequeuedEvent", (queueItems[0] as ApiPayload.Track).payload.event)
+            } finally {
+                client.close()
+            }
         }
 
     @Test
     fun `test events are dropped when consent is denied`() =
         runTest {
-            val testDispatcher = UnconfinedTestDispatcher(testScheduler)
+            val testDispatcher = StandardTestDispatcher(testScheduler)
             val config =
                 AltertableConfig(
                     apiKey = "test-key",
@@ -56,12 +124,16 @@ class ConsentAndQueueTest {
                     dispatcher = testDispatcher,
                 )
             val client = AltertableClient(config)
+            try {
+                advanceUntilIdle()
+                client.track("TestEvent")
+                advanceUntilIdle()
 
-            client.track("TestEvent")
-            advanceUntilIdle()
-
-            val queueItems = client.eventQueue.flush()
-            assertEquals(0, queueItems.size)
+                val queueItems = client.eventQueue.flush()
+                assertEquals(0, queueItems.size)
+            } finally {
+                client.close()
+            }
         }
 
     @Test
@@ -86,7 +158,7 @@ class ConsentAndQueueTest {
     @Test
     fun `test configure to DENIED clears queue`() =
         runTest {
-            val testDispatcher = UnconfinedTestDispatcher(testScheduler)
+            val testDispatcher = StandardTestDispatcher(testScheduler)
             val config =
                 AltertableConfig(
                     apiKey = "test-key",
@@ -94,12 +166,17 @@ class ConsentAndQueueTest {
                     dispatcher = testDispatcher,
                 )
             val client = AltertableClient(config)
-            client.track("TestEvent")
-            advanceUntilIdle()
-            client.configure { tracking { consent = TrackingConsent.DENIED } }
-            advanceUntilIdle()
-            val queueItems = client.eventQueue.flush()
-            assertEquals(0, queueItems.size)
+            try {
+                advanceUntilIdle()
+                client.track("TestEvent")
+                advanceUntilIdle()
+                client.configure { tracking { consent = TrackingConsent.DENIED } }
+                advanceUntilIdle()
+                val queueItems = client.eventQueue.flush()
+                assertEquals(0, queueItems.size)
+            } finally {
+                client.close()
+            }
         }
 
     @Test
@@ -119,7 +196,6 @@ class ConsentAndQueueTest {
             client1.close()
 
             val client2 = AltertableClient(config, storage)
-            // Wait for client2 init (identityManager, sessionManager, eventQueue.initialize())
             advanceUntilIdle()
             val queueItems = client2.eventQueue.flush()
             assertEquals(1, queueItems.size)

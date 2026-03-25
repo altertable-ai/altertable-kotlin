@@ -14,81 +14,113 @@ class InputValidationTest {
     fun `identify with blank userId emits error`() =
         runBlocking {
             val client = clientWithErrorCapture()
-            client.identify("")
-            val capturedError = withTimeout(1000) { client.errors.first() }
-            assertNotNull(capturedError)
-            assertInstanceOf(AltertableError::class.java, capturedError)
+            try {
+                client.identify("")
+                val capturedError = withTimeout(1000) { client.errors.first() }
+                assertNotNull(capturedError)
+                assertInstanceOf(AltertableError::class.java, capturedError)
+            } finally {
+                client.close()
+            }
         }
 
     @Test
     fun `identify with whitespace userId emits error`() =
         runBlocking {
             val client = clientWithErrorCapture()
-            client.identify("   ")
-            val capturedError = withTimeout(1000) { client.errors.first() }
-            assertNotNull(capturedError)
-            assertInstanceOf(AltertableError::class.java, capturedError)
+            try {
+                client.identify("   ")
+                val capturedError = withTimeout(1000) { client.errors.first() }
+                assertNotNull(capturedError)
+                assertInstanceOf(AltertableError::class.java, capturedError)
+            } finally {
+                client.close()
+            }
         }
 
     @Test
     fun `alias with blank newUserId emits error`() =
         runBlocking {
             val client = clientWithErrorCapture()
-            client.alias("")
-            val capturedError = withTimeout(1000) { client.errors.first() }
-            assertNotNull(capturedError)
-            assertInstanceOf(AltertableError::class.java, capturedError)
+            try {
+                client.alias("")
+                val capturedError = withTimeout(1000) { client.errors.first() }
+                assertNotNull(capturedError)
+                assertInstanceOf(AltertableError::class.java, capturedError)
+            } finally {
+                client.close()
+            }
         }
 
     @Test
     fun `track with blank event emits error`() =
         runBlocking {
             val client = clientWithErrorCapture()
-            client.track("")
-            val capturedError = withTimeout(1000) { client.errors.first() }
-            assertNotNull(capturedError)
-            assertInstanceOf(AltertableError::class.java, capturedError)
+            try {
+                client.track("")
+                val capturedError = withTimeout(1000) { client.errors.first() }
+                assertNotNull(capturedError)
+                assertInstanceOf(AltertableError::class.java, capturedError)
+            } finally {
+                client.close()
+            }
         }
 
     @Test
     fun `track with whitespace event emits error`() =
         runBlocking {
             val client = clientWithErrorCapture()
-            client.track("   ")
-            val capturedError = withTimeout(1000) { client.errors.first() }
-            assertNotNull(capturedError)
-            assertInstanceOf(AltertableError::class.java, capturedError)
+            try {
+                client.track("   ")
+                val capturedError = withTimeout(1000) { client.errors.first() }
+                assertNotNull(capturedError)
+                assertInstanceOf(AltertableError::class.java, capturedError)
+            } finally {
+                client.close()
+            }
         }
 
     @Test
     fun `identify with reserved userId emits error`() =
         runBlocking {
             val client = clientWithErrorCapture()
-            client.identify("null")
-            val capturedError = withTimeout(1000) { client.errors.first() }
-            assertNotNull(capturedError)
-            assertInstanceOf(AltertableError::class.java, capturedError)
+            try {
+                client.identify("null")
+                val capturedError = withTimeout(1000) { client.errors.first() }
+                assertNotNull(capturedError)
+                assertInstanceOf(AltertableError::class.java, capturedError)
+            } finally {
+                client.close()
+            }
         }
 
     @Test
     fun `identify with userId exceeding max length emits error`() =
         runBlocking {
             val client = clientWithErrorCapture()
-            val longId = "a".repeat(1025)
-            client.identify(longId)
-            val capturedError = withTimeout(1000) { client.errors.first() }
-            assertNotNull(capturedError)
-            assertInstanceOf(AltertableError::class.java, capturedError)
+            try {
+                val longId = "a".repeat(1025)
+                client.identify(longId)
+                val capturedError = withTimeout(1000) { client.errors.first() }
+                assertNotNull(capturedError)
+                assertInstanceOf(AltertableError::class.java, capturedError)
+            } finally {
+                client.close()
+            }
         }
 
     @Test
     fun `alias with reserved newUserId emits error`() =
         runBlocking {
             val client = clientWithErrorCapture()
-            client.identify("valid_user")
-            client.alias("undefined")
-            val capturedError = withTimeout(1000) { client.errors.first() }
-            assertNotNull(capturedError)
-            assertInstanceOf(AltertableError::class.java, capturedError)
+            try {
+                client.identify("valid_user")
+                client.alias("undefined")
+                val capturedError = withTimeout(1000) { client.errors.first() }
+                assertNotNull(capturedError)
+                assertInstanceOf(AltertableError::class.java, capturedError)
+            } finally {
+                client.close()
+            }
         }
 }

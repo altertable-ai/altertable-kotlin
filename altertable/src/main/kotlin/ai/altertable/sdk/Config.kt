@@ -84,7 +84,8 @@ public class AltertableException(
  *
  * @param baseUrl The base URL for the Altertable API.
  * @param requestTimeout The request timeout for network requests.
- * @param maxRetries Maximum retry attempts for failed requests (5xx and network errors).
+ * @param maxRetries Number of retries after the first attempt for transient failures (network, 429, 5xx).
+ *   With the default of `3`, the client performs up to four HTTP attempts total, matching the JS SDK.
  */
 public data class NetworkConfig(
     public val baseUrl: String = "https://api.altertable.ai",
@@ -99,12 +100,18 @@ public data class NetworkConfig(
  * @param captureScreenViews Whether to enable screen view auto-capture (Android only).
  * @param flushOnBackground Whether to flush pending events when the app goes into the background.
  * @param maxQueueSize Maximum events to hold in the queue (older events dropped when exceeded).
+ * @param flushEventThreshold Flush outbound batches when the combined buffered event count reaches this value.
+ * @param flushIntervalMs Periodic flush interval for outbound batches (milliseconds).
+ * @param maxBatchSize Maximum payloads per HTTP request per endpoint ([/track], [/identify], [/alias]).
  */
 public data class TrackingConfig(
     public val consent: TrackingConsent = TrackingConsent.GRANTED,
     public val captureScreenViews: Boolean = true,
     public val flushOnBackground: Boolean = true,
     public val maxQueueSize: Int = 1_000,
+    public val flushEventThreshold: Int = 20,
+    public val flushIntervalMs: Long = 5_000L,
+    public val maxBatchSize: Int = 20,
 )
 
 /**

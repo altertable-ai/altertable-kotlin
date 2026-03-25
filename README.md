@@ -293,7 +293,7 @@ lifecycleScope.launch {
 
 #### `flush()`
 
-Force-flushes any pending events in the queue. This is a fire-and-forget operation that does not block the calling thread.
+Force-flushes any pending consent-queue events and in-memory outbound batches. This is a fire-and-forget operation that does not block the calling thread.
 
 ```kotlin
 client.flush()
@@ -301,7 +301,7 @@ client.flush()
 
 #### `awaitFlush()`
 
-Force-flushes any pending events in the queue and suspends until completion. Use this when you need to ensure events are sent before proceeding (e.g., before app termination).
+Force-flushes any pending consent-queue events and in-memory outbound batches, and suspends until completion. Use this when you need to ensure events are sent before proceeding (e.g., before app termination).
 
 ```kotlin
 // In a suspend function or coroutine
@@ -311,6 +311,8 @@ lifecycleScope.launch {
 ```
 
 **Note:** Do not call `awaitFlush()` from the main thread on Android.
+
+When the API returns a **non-retryable** error (e.g. 4xx other than rate limits handled as retries), batched events are written back to the persisted queue (when your app uses disk-backed storage) so they are not silently dropped.
 
 ### Lifecycle
 
@@ -529,7 +531,7 @@ Initialize with an `AltertableConfig` object or use the DSL builder. All configu
 | :--- | :--- | :--- | :--- |
 | `network.baseUrl` | `String` | `"https://api.altertable.ai"` | The API endpoint URL. |
 | `network.requestTimeout` | `Duration` | `10.seconds` | Network request timeout. |
-| `network.maxRetries` | `Int` | `3` | Maximum retry attempts for failed requests (5xx and network errors). |
+| `network.maxRetries` | `Int` | `3` | Retries after the first attempt for transient failures (5xx, 429, network); up to four HTTP attempts total. |
 
 ### Tracking Configuration
 
@@ -539,6 +541,9 @@ Initialize with an `AltertableConfig` object or use the DSL builder. All configu
 | `tracking.captureScreenViews` | `Boolean` | `true` | Automatically track screen views on Android (Activity-based). |
 | `tracking.flushOnBackground` | `Boolean` | `true` | Automatically flush events when app goes into background (Android only). |
 | `tracking.maxQueueSize` | `Int` | `1000` | Maximum events to hold in the queue (older events dropped when exceeded). |
+| `tracking.flushEventThreshold` | `Int` | `20` | Flush outbound batches when the combined buffered event count (all types) reaches this value. |
+| `tracking.flushIntervalMs` | `Long` | `5000` | Periodic flush interval for outbound batches (milliseconds). |
+| `tracking.maxBatchSize` | `Int` | `20` | Maximum payloads per HTTP request per endpoint (`/track`, `/identify`, `/alias`). |
 
 ## Example App
 

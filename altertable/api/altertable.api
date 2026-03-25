@@ -256,18 +256,24 @@ public final class ai/altertable/sdk/SuperProperties {
 
 public final class ai/altertable/sdk/TrackingConfig {
 	public fun <init> ()V
-	public fun <init> (Lai/altertable/sdk/TrackingConsent;ZZI)V
-	public synthetic fun <init> (Lai/altertable/sdk/TrackingConsent;ZZIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lai/altertable/sdk/TrackingConsent;ZZIIJI)V
+	public synthetic fun <init> (Lai/altertable/sdk/TrackingConsent;ZZIIJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lai/altertable/sdk/TrackingConsent;
 	public final fun component2 ()Z
 	public final fun component3 ()Z
 	public final fun component4 ()I
-	public final fun copy (Lai/altertable/sdk/TrackingConsent;ZZI)Lai/altertable/sdk/TrackingConfig;
-	public static synthetic fun copy$default (Lai/altertable/sdk/TrackingConfig;Lai/altertable/sdk/TrackingConsent;ZZIILjava/lang/Object;)Lai/altertable/sdk/TrackingConfig;
+	public final fun component5 ()I
+	public final fun component6 ()J
+	public final fun component7 ()I
+	public final fun copy (Lai/altertable/sdk/TrackingConsent;ZZIIJI)Lai/altertable/sdk/TrackingConfig;
+	public static synthetic fun copy$default (Lai/altertable/sdk/TrackingConfig;Lai/altertable/sdk/TrackingConsent;ZZIIJIILjava/lang/Object;)Lai/altertable/sdk/TrackingConfig;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCaptureScreenViews ()Z
 	public final fun getConsent ()Lai/altertable/sdk/TrackingConsent;
+	public final fun getFlushEventThreshold ()I
+	public final fun getFlushIntervalMs ()J
 	public final fun getFlushOnBackground ()Z
+	public final fun getMaxBatchSize ()I
 	public final fun getMaxQueueSize ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -277,11 +283,17 @@ public final class ai/altertable/sdk/TrackingConfigBuilder {
 	public fun <init> ()V
 	public final fun getCaptureScreenViews ()Z
 	public final fun getConsent ()Lai/altertable/sdk/TrackingConsent;
+	public final fun getFlushEventThreshold ()I
+	public final fun getFlushIntervalMs ()J
 	public final fun getFlushOnBackground ()Z
+	public final fun getMaxBatchSize ()I
 	public final fun getMaxQueueSize ()I
 	public final fun setCaptureScreenViews (Z)V
 	public final fun setConsent (Lai/altertable/sdk/TrackingConsent;)V
+	public final fun setFlushEventThreshold (I)V
+	public final fun setFlushIntervalMs (J)V
 	public final fun setFlushOnBackground (Z)V
+	public final fun setMaxBatchSize (I)V
 	public final fun setMaxQueueSize (I)V
 }
 
