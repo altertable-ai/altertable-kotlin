@@ -37,7 +37,7 @@ body:
   - type: input
     id: runtime
     attributes:
-      label: "{language} Version"
+      label: "Kotlin Version"
     validations:
       required: true
   - type: dropdown
