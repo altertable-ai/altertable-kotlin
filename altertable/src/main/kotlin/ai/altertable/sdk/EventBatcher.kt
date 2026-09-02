@@ -195,35 +195,29 @@ internal class EventBatcher(
             return
         }
         val safeChunkSize = chunkSize.coerceAtLeast(1)
-        var index = 0
-        while (index < items.size) {
-            val chunk = items.subList(index, (index + safeChunkSize).coerceAtMost(items.size)).toList()
-            index += safeChunkSize
-            launchChunkSend(fromTimer, dispatchGeneration, endpoint, chunk)
-        }
-    }
-
-    private fun launchChunkSend(
-        fromTimer: Boolean,
-        dispatchGeneration: Int,
-        endpoint: String,
-        chunk: List<ApiPayload>,
-    ) {
         val bucket = if (fromTimer) inFlightTimer else inFlightOther
         val job =
             scope.launch(start = CoroutineStart.LAZY) {
-                try {
-                    send(endpoint, chunk)
-                } catch (cancellationException: CancellationException) {
-                    throw cancellationException
-                } catch (e: AltertableException) {
-                    if (isRetryableHttpDeliveryError(e.error)) {
-                        bufferMutex.withLock {
-                            if (dispatchGeneration == bufferGeneration) {
-                                prependToBuffer(endpoint, chunk)
+                var index = 0
+                while (index < items.size) {
+                    val chunk =
+                        items.subList(index, (index + safeChunkSize).coerceAtMost(items.size)).toList()
+                    try {
+                        send(endpoint, chunk)
+                    } catch (cancellationException: CancellationException) {
+                        throw cancellationException
+                    } catch (e: AltertableException) {
+                        if (isRetryableHttpDeliveryError(e.error)) {
+                            bufferMutex.withLock {
+                                if (dispatchGeneration == bufferGeneration) {
+                                    // Preserve the failed payloads and the unsent FIFO tail for retry.
+                                    prependToBuffer(endpoint, items.subList(index, items.size))
+                                }
                             }
+                            return@launch
                         }
                     }
+                    index += chunk.size
                 }
             }
         synchronized(bucket) {
