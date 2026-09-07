@@ -135,6 +135,38 @@ class BatcherTest {
         }
 
     @Test
+    fun `default maxBatchSize sends twenty one track payloads in FIFO twenty and one chunks`() =
+        runBlocking {
+            val batcherScope = batcherScope()
+            val batches = Collections.synchronizedList(mutableListOf<List<ApiPayload>>())
+            val batcher =
+                EventBatcher(
+                    scope = batcherScope,
+                    flushEventThreshold = 100,
+                    flushIntervalMs = 60_000L,
+                    maxBatchSize = TrackingConfig().maxBatchSize,
+                    send = { _, payloads ->
+                        batches.add(payloads.toList())
+                    },
+                )
+            try {
+                batcher.start()
+                repeat(21) { index ->
+                    batcher.add(trackPayload("event-%02d".format(index + 1)))
+                }
+                batcher.flush()
+                assertEquals(listOf(20, 1), batches.map { it.size })
+                assertEquals(
+                    (1..21).map { "event-%02d".format(it) },
+                    batches.flatten().map { (it as ApiPayload.Track).payload.event },
+                )
+            } finally {
+                batcher.stop()
+                batcherScope.cancel()
+            }
+        }
+
+    @Test
     fun `retryable failure prepends chunk back for later flush`() =
         runBlocking {
             val batcherScope = batcherScope()
