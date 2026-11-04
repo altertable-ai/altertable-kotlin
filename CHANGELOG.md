@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Add lifecycle-fixed audience mode for Kotlin and Android with identity-free payloads, in-memory state and queues, reduced context, and sanitization after event hooks.
+
+### Fixed
+- Honor event hooks returning null and prevent explicit flushes from sending events while consent is pending.
+
 ## [0.1.0] - 2026-03-10
 
 ### Added

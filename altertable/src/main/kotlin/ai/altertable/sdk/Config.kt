@@ -5,6 +5,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+/** Collection policy, fixed for the lifetime of a client. */
+public enum class TrackingMode {
+    /** Standard product analytics with identity and persistent state. */
+    PRODUCT,
+
+    /** Audience measurement without client identifiers or persistent state. */
+    AUDIENCE,
+}
+
 /**
  * Represents the current tracking consent state.
  */
@@ -126,6 +135,7 @@ public data class TrackingConfig(
  * @param dispatcher Coroutine dispatcher for async operations (inject for deterministic tests).
  * @param logger Optional logger for SDK events (inject for testing or custom logging).
  * @param integrations Integrations to install on setup (e.g., lifecycle tracking, screen views).
+ * @param mode Collection policy. Create a new client to change modes.
  * @param beforeSend Hooks to transform or filter events before they are sent. Return null to drop.
  */
 @Suppress("LongParameterList")
@@ -140,4 +150,31 @@ public class AltertableConfig(
     public val logger: AltertableLogger? = null,
     public val integrations: List<AltertableIntegration> = emptyList(),
     public val beforeSend: List<EventInterceptor> = emptyList(),
-)
+    public val mode: TrackingMode,
+) {
+    /** Creates a product client configuration, retaining the original constructor ABI. */
+    public constructor(
+        apiKey: String,
+        environment: String = "production",
+        network: NetworkConfig = NetworkConfig(),
+        tracking: TrackingConfig = TrackingConfig(),
+        release: String? = null,
+        debug: Boolean = false,
+        dispatcher: CoroutineDispatcher = Dispatchers.IO,
+        logger: AltertableLogger? = null,
+        integrations: List<AltertableIntegration> = emptyList(),
+        beforeSend: List<EventInterceptor> = emptyList(),
+    ) : this(
+        apiKey = apiKey,
+        environment = environment,
+        network = network,
+        tracking = tracking,
+        release = release,
+        debug = debug,
+        dispatcher = dispatcher,
+        logger = logger,
+        integrations = integrations,
+        beforeSend = beforeSend,
+        mode = TrackingMode.PRODUCT,
+    )
+}

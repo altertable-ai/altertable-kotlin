@@ -41,6 +41,8 @@ public final class ai/altertable/sdk/Altertable$DefaultImpls {
 public final class ai/altertable/sdk/AltertableConfig {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lai/altertable/sdk/NetworkConfig;Lai/altertable/sdk/TrackingConfig;Ljava/lang/String;ZLkotlinx/coroutines/CoroutineDispatcher;Lai/altertable/sdk/AltertableLogger;Ljava/util/List;Ljava/util/List;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lai/altertable/sdk/NetworkConfig;Lai/altertable/sdk/TrackingConfig;Ljava/lang/String;ZLkotlinx/coroutines/CoroutineDispatcher;Lai/altertable/sdk/AltertableLogger;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lai/altertable/sdk/NetworkConfig;Lai/altertable/sdk/TrackingConfig;Ljava/lang/String;ZLkotlinx/coroutines/CoroutineDispatcher;Lai/altertable/sdk/AltertableLogger;Ljava/util/List;Ljava/util/List;Lai/altertable/sdk/TrackingMode;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lai/altertable/sdk/NetworkConfig;Lai/altertable/sdk/TrackingConfig;Ljava/lang/String;ZLkotlinx/coroutines/CoroutineDispatcher;Lai/altertable/sdk/AltertableLogger;Ljava/util/List;Ljava/util/List;Lai/altertable/sdk/TrackingMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getApiKey ()Ljava/lang/String;
 	public final fun getBeforeSend ()Ljava/util/List;
 	public final fun getDebug ()Z
@@ -48,6 +50,7 @@ public final class ai/altertable/sdk/AltertableConfig {
 	public final fun getEnvironment ()Ljava/lang/String;
 	public final fun getIntegrations ()Ljava/util/List;
 	public final fun getLogger ()Lai/altertable/sdk/AltertableLogger;
+	public final fun getMode ()Lai/altertable/sdk/TrackingMode;
 	public final fun getNetwork ()Lai/altertable/sdk/NetworkConfig;
 	public final fun getRelease ()Ljava/lang/String;
 	public final fun getTracking ()Lai/altertable/sdk/TrackingConfig;
@@ -64,6 +67,7 @@ public final class ai/altertable/sdk/AltertableConfigBuilder {
 	public final fun getEnvironment ()Ljava/lang/String;
 	public final fun getIntegrations ()Ljava/util/List;
 	public final fun getLogger ()Lai/altertable/sdk/AltertableLogger;
+	public final fun getMode ()Lai/altertable/sdk/TrackingMode;
 	public final fun getRelease ()Ljava/lang/String;
 	public final fun network (Lkotlin/jvm/functions/Function1;)V
 	public final fun setApiKey (Ljava/lang/String;)V
@@ -73,6 +77,7 @@ public final class ai/altertable/sdk/AltertableConfigBuilder {
 	public final fun setEnvironment (Ljava/lang/String;)V
 	public final fun setIntegrations (Ljava/util/List;)V
 	public final fun setLogger (Lai/altertable/sdk/AltertableLogger;)V
+	public final fun setMode (Lai/altertable/sdk/TrackingMode;)V
 	public final fun setRelease (Ljava/lang/String;)V
 	public final fun tracking (Lkotlin/jvm/functions/Function1;)V
 }
@@ -305,5 +310,13 @@ public final class ai/altertable/sdk/TrackingConsent : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lai/altertable/sdk/TrackingConsent;
 	public static fun values ()[Lai/altertable/sdk/TrackingConsent;
+}
+
+public final class ai/altertable/sdk/TrackingMode : java/lang/Enum {
+	public static final field AUDIENCE Lai/altertable/sdk/TrackingMode;
+	public static final field PRODUCT Lai/altertable/sdk/TrackingMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lai/altertable/sdk/TrackingMode;
+	public static fun values ()[Lai/altertable/sdk/TrackingMode;
 }
 

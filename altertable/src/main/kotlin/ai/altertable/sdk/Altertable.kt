@@ -87,7 +87,7 @@ public interface Altertable : Closeable {
      * - Logger instance (`logger = ...`)
      * - Event interceptors (`beforeSend = listOf(...)`)
      *
-     * Changing `apiKey`, `environment`, `dispatcher`, or network settings requires
+     * Changing `mode`, `apiKey`, `environment`, `dispatcher`, or network settings requires
      * creating a new client instance.
      *
      * @param block Lambda that modifies the runtime configuration builder.

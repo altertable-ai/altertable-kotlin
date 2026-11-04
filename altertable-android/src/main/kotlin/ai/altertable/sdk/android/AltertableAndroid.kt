@@ -3,6 +3,7 @@ package ai.altertable.sdk.android
 import ai.altertable.sdk.Altertable
 import ai.altertable.sdk.AltertableConfig
 import ai.altertable.sdk.AltertableConfigBuilder
+import ai.altertable.sdk.TrackingMode
 import ai.altertable.sdk.AltertableInternal
 import android.app.Application
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -61,7 +62,6 @@ public object AltertableAndroid {
     ): Altertable {
         synchronized(setupLock) {
             unregister(application) // clean up any previous registration
-            val storage = SharedPreferencesStorage.create(application)
             val contextProvider = AndroidContextProvider(application.applicationContext)
             // Use AndroidLogger as default if debug is enabled and no logger is provided
             val androidConfig = if (config.debug && config.logger == null) {
@@ -73,7 +73,11 @@ public object AltertableAndroid {
                 config
             }
             @OptIn(AltertableInternal::class)
-            val instance = Altertable.setup(androidConfig, storage, contextProvider)
+            val instance = if (config.mode == TrackingMode.AUDIENCE) {
+                Altertable.setup(androidConfig, contextProvider = contextProvider)
+            } else {
+                Altertable.setup(androidConfig, SharedPreferencesStorage.create(application), contextProvider)
+            }
 
             if (config.tracking.flushOnBackground) {
                 lifecycleObserver = ProcessLifecycleObserver(instance).also { observer ->

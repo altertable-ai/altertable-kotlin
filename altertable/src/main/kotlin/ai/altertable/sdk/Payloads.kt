@@ -30,13 +30,14 @@ internal data class TrackPayload(
     @Serializable(with = InstantIso8601Serializer::class)
     val timestamp: Instant,
     val event: String,
-    val environment: String,
-    @SerialName("device_id") val deviceId: String,
-    @SerialName("distinct_id") val distinctId: String,
-    @SerialName("anonymous_id") val anonymousId: String?,
-    @SerialName("session_id") val sessionId: String,
+    val environment: String? = null,
+    @SerialName("device_id") val deviceId: String? = null,
+    @SerialName("distinct_id") val distinctId: String? = null,
+    @SerialName("anonymous_id") val anonymousId: String? = null,
+    @SerialName("session_id") val sessionId: String? = null,
     val properties: JsonObject = buildJsonObject {},
     val release: String? = null,
+    val mode: String? = null,
 )
 
 /**
