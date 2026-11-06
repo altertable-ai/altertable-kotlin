@@ -131,7 +131,7 @@ val testClient = Altertable.create {
 
 ### Audience measurement
 
-Product analytics remains the default. To collect audience events on JVM or Android, select the mode during setup:
+Product analytics is the default. Use an environment-bound Product Analytics API key and select audience mode during setup:
 
 ```kotlin
 import ai.altertable.sdk.TrackingMode
@@ -140,35 +140,27 @@ Altertable.setup {
     apiKey = "your-api-key"
     mode = TrackingMode.AUDIENCE
 }
-// The same mode option works in AltertableAndroid.setup(application) { ... }.
 Altertable.shared?.track("Docs Opened", mapOf("section" to "installation"))
 ```
 
-Audience requests contain `mode: "audience"`, `event`, `timestamp`, and `properties`.
-They omit distinct, anonymous, device, and session IDs, as well as the top-level
-`environment` and `release` fields. The API key selects the environment; release
-metadata may still appear in `$release` properties.
+The same option works in `AltertableAndroid.setup(application) { ... }`.
+Audience events omit user, anonymous, device, and session IDs. The API key selects
+the environment; `environment` is ignored. `identify`, `alias`, and `updateTraits`
+are ignored, with warnings when `debug` is enabled. Android screen and background
+lifecycle tracking remain available.
 
-Audience state, consent, and queued events stay in memory, even when custom storage
-is supplied. Audience clients neither read nor change persisted product state or
-replay its queues. Closing or replacing a client discards its in-memory audience
-queue. `identify`, `alias`, and `updateTraits` are ignored, with warnings when
-`debug` is enabled. `reset` clears queued events and can reset consent without
-creating identifiers.
+State, consent, and queues stay in memory, including when custom storage is supplied.
+Persisted product state is untouched. Closing or replacing the client discards its
+unsent audience events. Pending/dismissed consent waits for a grant; denied consent
+clears queued events and drops new ones. `flush` and `awaitFlush` respect consent.
 
-Automatic context is limited to SDK name/version and configured release. Android
-screen and background lifecycle tracking still work. Audience mode removes
-`$viewport`, reduces `$url` to HTTP(S) origin plus path, and reduces `$referer` to
-HTTP(S) origin. Invalid or unsupported URLs become null. These restrictions apply
-after `beforeSend`, including runtime hook changes. The SDK does not automatically
-extract URL query parameters. Custom event and super properties (including screen
-names and URL paths) are caller-controlled and are **not automatically PII-safe**.
+Audience mode limits automatic context to SDK name/version and configured release,
+removes `$viewport`, reduces `$url` to HTTP(S) origin plus path, and reduces `$referer`
+to origin. Invalid URLs become null. These rules apply after `beforeSend`. Custom
+properties, screen names, and URL paths can still contain personal information;
+choose them accordingly.
 
-Consent applies in both modes: pending/dismissed events wait for a grant, denied
-events are dropped, and denial clears queued events. Explicit `flush` and
-`awaitFlush` do not send pending-consent events. Mode is fixed for a client
-lifecycle and is unavailable in `configure`; call `setup` again or create a new
-client to change modes.
+Mode is fixed for each client. Call `setup` again or create a new client to change it.
 
 ### Event Tracking
 
@@ -559,7 +551,7 @@ Initialize with an `AltertableConfig` object or use the DSL builder. All configu
 | :--- | :--- | :--- | :--- |
 | `mode` | `TrackingMode` | `PRODUCT` | Collection policy; use `AUDIENCE` for in-memory audience measurement. Fixed until a new client is created. |
 | `apiKey` | `String` | (Required) | Your project API key. |
-| `environment` | `String` | `"production"` | Environment name (e.g., "production", "staging"). |
+| `environment` | `String` | `"production"` | Product environment name. Audience mode uses the API key’s environment. |
 | `release` | `String?` | `null` | The release version of your app. |
 | `debug` | `Boolean` | `false` | Enables verbose logging. |
 | `dispatcher` | `CoroutineDispatcher` | `Dispatchers.IO` | Coroutine dispatcher for async operations. |
