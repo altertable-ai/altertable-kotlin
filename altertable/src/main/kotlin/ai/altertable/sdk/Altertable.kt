@@ -87,7 +87,7 @@ public interface Altertable : Closeable {
      * - Logger instance (`logger = ...`)
      * - Event interceptors (`beforeSend = listOf(...)`)
      *
-     * Changing `mode`, `apiKey`, `environment`, `dispatcher`, or network settings requires
+     * Changing `mode`, `apiKey`, `dispatcher`, or network settings requires
      * creating a new client instance.
      *
      * @param block Lambda that modifies the runtime configuration builder.
@@ -189,7 +189,7 @@ public interface Altertable : Closeable {
         /**
          * Creates and returns a new [Altertable] instance (non-singleton) using a DSL builder.
          *
-         * Use this for multi-environment setups, testing, or when embedding the SDK in a library.
+         * Use this for separate environment-bound API keys, testing, or when embedding the SDK in a library.
          *
          * @param block The configuration DSL block.
          * @return A new [Altertable] instance.
@@ -204,7 +204,7 @@ public interface Altertable : Closeable {
         /**
          * Creates and returns a new [Altertable] instance (non-singleton).
          *
-         * Use this for multi-environment setups, testing, or when embedding the SDK in a library.
+         * Use this for separate environment-bound API keys, testing, or when embedding the SDK in a library.
          *
          * @param config The [AltertableConfig] to configure the client with.
          * @return A new [Altertable] instance.

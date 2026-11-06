@@ -30,7 +30,7 @@ internal data class TrackPayload(
     @Serializable(with = InstantIso8601Serializer::class)
     val timestamp: Instant,
     val event: String,
-    val environment: String? = null,
+    @Transient val environment: String? = null,
     @SerialName("device_id") val deviceId: String? = null,
     @SerialName("distinct_id") val distinctId: String? = null,
     @SerialName("anonymous_id") val anonymousId: String? = null,
@@ -55,7 +55,7 @@ internal data class TrackPayload(
 internal data class IdentifyPayload(
     @Serializable(with = InstantIso8601Serializer::class)
     val timestamp: Instant,
-    val environment: String,
+    @Transient val environment: String? = null,
     @SerialName("device_id") val deviceId: String,
     @SerialName("distinct_id") val distinctId: String,
     @SerialName("anonymous_id") val anonymousId: String?,
@@ -78,7 +78,7 @@ internal data class IdentifyPayload(
 internal data class AliasPayload(
     @Serializable(with = InstantIso8601Serializer::class)
     val timestamp: Instant,
-    val environment: String,
+    @Transient val environment: String? = null,
     @SerialName("device_id") val deviceId: String,
     @SerialName("distinct_id") val distinctId: String,
     @SerialName("anonymous_id") val anonymousId: String?,
@@ -215,6 +215,14 @@ internal fun ApiPayload.applyEvent(event: Event?): ApiPayload? {
         }
     }
 }
+
+/** Remove legacy routing data after caller hooks and before persistence or delivery. */
+internal fun ApiPayload.withoutEnvironment(): ApiPayload =
+    when (this) {
+        is ApiPayload.Track -> copy(payload = payload.copy(environment = null))
+        is ApiPayload.Identify -> copy(payload = payload.copy(environment = null))
+        is ApiPayload.Alias -> copy(payload = payload.copy(environment = null))
+    }
 
 /**
  * Converts a JsonObject to a Map<String, Any> for public API.

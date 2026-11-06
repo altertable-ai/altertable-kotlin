@@ -1,6 +1,8 @@
 package ai.altertable.sdk
 
 import io.ktor.client.engine.HttpClientEngine
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -24,7 +26,7 @@ import java.io.Closeable
  * @param config The [AltertableConfig] instance used to initialize the client.
  */
 @OptIn(AltertableInternal::class)
-@Suppress("LongParameterList", "TooManyFunctions")
+@Suppress("DEPRECATION", "LongParameterList", "TooGenericExceptionCaught", "TooManyFunctions")
 internal class AltertableClient private constructor(
     initialConfig: AltertableConfig,
     private val storage: Storage,
@@ -35,6 +37,7 @@ internal class AltertableClient private constructor(
     private var transport: Transport,
 ) : Altertable {
     private val configState = MutableStateFlow(initialConfig)
+    private val initialization = CompletableDeferred<Unit>()
     private val scope = CoroutineScope(initialConfig.dispatcher + SupervisorJob())
     private val superPropertiesMutex = Mutex()
     private val superPropertiesMap = mutableMapOf<String, Any>()
@@ -84,18 +87,28 @@ internal class AltertableClient private constructor(
         }
         // Initialize managers and restore consent asynchronously
         scope.launch {
-            if (initialConfig.mode == TrackingMode.PRODUCT) {
-                identityManager.initialize()
-                sessionManager.initialize()
-            }
-            eventQueue.initialize()
-            // Restore consent from storage and update config
-            val restoredConfig = restoreConsentFromStorage(configState.value, storage)
-            val previousConsent = configState.value.tracking.consent
-            if (restoredConfig.tracking.consent != previousConsent) {
-                configState.value = restoredConfig
-                trackingConsentState.value = restoredConfig.tracking.consent
-                applyConsentTransition(previousConsent, restoredConfig.tracking.consent)
+            try {
+                if (initialConfig.mode == TrackingMode.PRODUCT) {
+                    migrateLegacyStorage(initialConfig)
+                    identityManager.initialize()
+                    sessionManager.initialize()
+                }
+                eventQueue.initialize()
+                // Restore consent from storage and update config
+                val restoredConfig = restoreConsentFromStorage(configState.value, storage)
+                val previousConsent = configState.value.tracking.consent
+                if (restoredConfig.tracking.consent != previousConsent) {
+                    configState.value = restoredConfig
+                    trackingConsentState.value = restoredConfig.tracking.consent
+                    applyConsentTransition(previousConsent, restoredConfig.tracking.consent)
+                }
+                initialization.complete(Unit)
+            } catch (error: CancellationException) {
+                initialization.completeExceptionally(error)
+                throw error
+            } catch (error: Throwable) {
+                initialization.completeExceptionally(error)
+                errorsFlow.emit(AltertableError.Validation("Failed to initialize Altertable state: ${error.message}"))
             }
         }
     }
@@ -190,6 +203,7 @@ internal class AltertableClient private constructor(
      */
     override fun configure(block: RuntimeConfigBuilder.() -> Unit) {
         scope.launch {
+            if (!awaitInitialization()) return@launch
             val oldConsent = configState.value.tracking.consent
             val oldTracking = configState.value.tracking
             val builder = RuntimeConfigBuilder().from(configState.value)
@@ -230,14 +244,17 @@ internal class AltertableClient private constructor(
         userId: String,
         traits: Map<String, Any>,
     ) {
-        identifyInternal(userId, traits)
+        if (rejectAudienceIdentityCall()) return
+        scope.launch {
+            if (!awaitInitialization()) return@launch
+            identifyInternal(userId, traits)
+        }
     }
 
-    private fun identifyInternal(
+    private suspend fun identifyInternal(
         userId: String,
         traits: Map<String, Any>,
     ) {
-        if (rejectAudienceIdentityCall()) return
         validateUserId(userId).onFailure { exception ->
             val altertableError =
                 when (exception) {
@@ -259,38 +276,11 @@ internal class AltertableClient private constructor(
                     "Use alias() to link the new ID to the existing one if intentional.",
             )
         }
-        scope.launch {
-            if (needsReset) {
-                identityManager.reset(resetDeviceId = false)
-                sessionManager.renewSession()
-            }
-            identityManager.identify(trimmedUserId)
-            val currentConfig = configState.value
-            val payload =
-                IdentifyPayload(
-                    timestamp = Clock.System.now(),
-                    environment = currentConfig.environment,
-                    deviceId = identityManager.deviceId,
-                    distinctId = identityManager.distinctId,
-                    anonymousId = identityManager.anonymousId,
-                    traits = propertiesToJsonObject(traits),
-                    release = currentConfig.release,
-                )
-            enqueueOrSend(ApiPayload.Identify(payload), clearQueueFirst = needsReset)
+        if (needsReset) {
+            identityManager.reset(resetDeviceId = false)
+            sessionManager.renewSession()
         }
-    }
-
-    /**
-     * Updates user traits for the current identified user.
-     */
-    override fun updateTraits(traits: Map<String, Any>) {
-        if (rejectAudienceIdentityCall()) return
-        if (identityManager.anonymousId == null) {
-            val error = AltertableError.Validation("User must be identified with identify() before updating traits.")
-            log(LogLevel.ERROR, error.message)
-            errorsFlow.tryEmit(error)
-            return
-        }
+        identityManager.identify(trimmedUserId)
         val currentConfig = configState.value
         val payload =
             IdentifyPayload(
@@ -302,7 +292,38 @@ internal class AltertableClient private constructor(
                 traits = propertiesToJsonObject(traits),
                 release = currentConfig.release,
             )
-        enqueueOrSend(ApiPayload.Identify(payload))
+        enqueueOrSend(ApiPayload.Identify(payload), clearQueueFirst = needsReset)
+    }
+
+    /**
+     * Updates user traits for the current identified user.
+     */
+    override fun updateTraits(traits: Map<String, Any>) {
+        if (rejectAudienceIdentityCall()) return
+        scope.launch {
+            if (!awaitInitialization()) return@launch
+            if (identityManager.anonymousId == null) {
+                val error =
+                    AltertableError.Validation(
+                        "User must be identified with identify() before updating traits.",
+                    )
+                log(LogLevel.ERROR, error.message)
+                errorsFlow.tryEmit(error)
+                return@launch
+            }
+            val currentConfig = configState.value
+            val payload =
+                IdentifyPayload(
+                    timestamp = Clock.System.now(),
+                    environment = currentConfig.environment,
+                    deviceId = identityManager.deviceId,
+                    distinctId = identityManager.distinctId,
+                    anonymousId = identityManager.anonymousId,
+                    traits = propertiesToJsonObject(traits),
+                    release = currentConfig.release,
+                )
+            enqueueOrSend(ApiPayload.Identify(payload))
+        }
     }
 
     /**
@@ -323,28 +344,31 @@ internal class AltertableClient private constructor(
      */
     override fun alias(newUserId: String) {
         if (rejectAudienceIdentityCall()) return
-        validateUserId(newUserId).onFailure { exception ->
-            val altertableError =
-                when (exception) {
-                    is AltertableException -> exception.error
-                    else -> AltertableError.Validation(exception.message ?: "Validation failed")
-                }
-            log(LogLevel.ERROR, altertableError.message)
-            errorsFlow.tryEmit(altertableError)
-            return
+        scope.launch {
+            if (!awaitInitialization()) return@launch
+            validateUserId(newUserId).onFailure { exception ->
+                val altertableError =
+                    when (exception) {
+                        is AltertableException -> exception.error
+                        else -> AltertableError.Validation(exception.message ?: "Validation failed")
+                    }
+                log(LogLevel.ERROR, altertableError.message)
+                errorsFlow.tryEmit(altertableError)
+                return@launch
+            }
+            val currentConfig = configState.value
+            val payload =
+                AliasPayload(
+                    timestamp = Clock.System.now(),
+                    environment = currentConfig.environment,
+                    deviceId = identityManager.deviceId,
+                    distinctId = identityManager.distinctId,
+                    anonymousId = identityManager.anonymousId,
+                    newUserId = newUserId.trim(),
+                    release = currentConfig.release,
+                )
+            enqueueOrSend(ApiPayload.Alias(payload))
         }
-        val currentConfig = configState.value
-        val payload =
-            AliasPayload(
-                timestamp = Clock.System.now(),
-                environment = currentConfig.environment,
-                deviceId = identityManager.deviceId,
-                distinctId = identityManager.distinctId,
-                anonymousId = identityManager.anonymousId,
-                newUserId = newUserId.trim(),
-                release = currentConfig.release,
-            )
-        enqueueOrSend(ApiPayload.Alias(payload))
     }
 
     /**
@@ -358,6 +382,7 @@ internal class AltertableClient private constructor(
         resetTrackingConsent: Boolean,
     ) {
         scope.launch {
+            if (!awaitInitialization()) return@launch
             if (configState.value.mode == TrackingMode.PRODUCT) {
                 identityManager.reset(resetDeviceId)
                 sessionManager.renewSession()
@@ -408,6 +433,7 @@ internal class AltertableClient private constructor(
             return
         }
         scope.launch {
+            if (!awaitInitialization()) return@launch
             val currentConfig = configState.value
             val audience = currentConfig.mode == TrackingMode.AUDIENCE
             val sessionId = if (audience) null else sessionManager.getSessionIdAndTouch()
@@ -448,14 +474,16 @@ internal class AltertableClient private constructor(
      * This is a fire-and-forget operation that does not block the calling thread.
      */
     override fun flush() {
-        scope.launch { flushAllPending() }
+        scope.launch {
+            if (awaitInitialization()) flushAllPending()
+        }
     }
 
     /**
      * Force-flushes any pending events in the queue and suspends until completion.
      */
     override suspend fun awaitFlush() {
-        flushAllPending()
+        if (awaitInitialization()) flushAllPending()
     }
 
     /**
@@ -491,7 +519,7 @@ internal class AltertableClient private constructor(
                 val track = transformed as? ApiPayload.Track ?: return
                 track.copy(payload = prepareAudienceEvent(track.payload))
             } else {
-                transformed
+                transformed.withoutEnvironment()
             }
 
         scope.launch {
@@ -510,6 +538,86 @@ internal class AltertableClient private constructor(
             }
         }
     }
+
+    /** Restore only the explicitly selected legacy namespace as one recoverable state move. */
+    @Suppress("DEPRECATION")
+    private suspend fun migrateLegacyStorage(config: AltertableConfig) {
+        val legacy = buildLegacyStorageKeyPrefix(config.apiKey, config.environment)
+        val current = buildStorageKeyPrefix(config.apiKey)
+        migrateLegacyState(
+            legacy,
+            current,
+            listOf(
+                "device_id",
+                "distinct_id",
+                "anonymous_id",
+                "session_id",
+                "last_event_at",
+                STORAGE_KEY_QUEUE,
+                STORAGE_KEY_TRACKING_CONSENT,
+            ),
+        )
+    }
+
+    private suspend fun migrateLegacyState(
+        legacyPrefix: String,
+        currentPrefix: String,
+        suffixes: List<String>,
+    ) {
+        val targets = suffixes.associateWith { "$currentPrefix$STORAGE_KEY_SEPARATOR$it" }
+        val marker = "$currentPrefix${STORAGE_KEY_SEPARATOR}legacy_migration"
+        val pendingMigration = storage[marker]
+        if (pendingMigration == null && targets.values.any { storage[it] != null }) {
+            val source = suffixes.associateWith { storage["$legacyPrefix$STORAGE_KEY_SEPARATOR$it"] }
+            source.filterValues { it != null }.keys.forEach { suffix ->
+                storage.remove("$legacyPrefix$STORAGE_KEY_SEPARATOR$suffix")
+                check(storage["$legacyPrefix$STORAGE_KEY_SEPARATOR$suffix"] == null) {
+                    "Storage failed to remove superseded Altertable state"
+                }
+            }
+            return
+        }
+        val sourcePrefix =
+            pendingMigration ?: legacyPrefix.also {
+                storage[marker] = it
+                check(storage[marker] == it) {
+                    "Storage failed to persist Altertable migration state"
+                }
+            }
+        val source = suffixes.associateWith { storage["$sourcePrefix$STORAGE_KEY_SEPARATOR$it"] }
+        source.forEach { (suffix, value) ->
+            if (value != null) storage[checkNotNull(targets[suffix])] = value
+        }
+        source.forEach { (suffix, value) ->
+            if (value != null) {
+                check(storage[checkNotNull(targets[suffix])] == value) {
+                    "Storage failed to persist migrated Altertable state"
+                }
+            }
+        }
+        source.filterValues { it != null }.keys.forEach { suffix ->
+            val key = "$sourcePrefix$STORAGE_KEY_SEPARATOR$suffix"
+            storage.remove(key)
+            check(storage[key] == null) {
+                "Storage failed to remove migrated Altertable state"
+            }
+        }
+        storage.remove(marker)
+        check(storage[marker] == null) {
+            "Storage failed to complete Altertable state migration"
+        }
+    }
+
+    /** Returns false after a failed initialization so public calls cannot race partial state. */
+    private suspend fun awaitInitialization(): Boolean =
+        try {
+            initialization.await()
+            true
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Throwable) {
+            false
+        }
 
     /**
      * Replays persisted consent queue into the batcher, then flushes that snapshot (JS parity).

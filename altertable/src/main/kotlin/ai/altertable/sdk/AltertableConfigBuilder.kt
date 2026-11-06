@@ -21,7 +21,6 @@ internal annotation class AltertableDsl
  * ```
  * Altertable.setup {
  *     apiKey = "your-api-key"
- *     environment = "production"
  *     debug = true
  * }
  * ```
@@ -89,7 +88,7 @@ public class TrackingConfigBuilder {
  * - Logger instance
  * - Event interceptors (beforeSend)
  *
- * Changing `mode`, `apiKey`, `environment`, `dispatcher`, or `network` settings requires
+ * Changing `mode`, `apiKey`, `dispatcher`, or `network` settings requires
  * creating a new client instance.
  */
 @AltertableDsl
@@ -132,6 +131,8 @@ public class RuntimeConfigBuilder {
 public class AltertableConfigBuilder {
     public var mode: TrackingMode = TrackingMode.PRODUCT
     public var apiKey: String = ""
+
+    @Deprecated("The environment is determined by your API key and this value is ignored.")
     public var environment: String = "production"
     public var release: String? = null
     public var debug: Boolean = false

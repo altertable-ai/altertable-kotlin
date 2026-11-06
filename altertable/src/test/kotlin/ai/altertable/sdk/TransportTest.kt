@@ -4,13 +4,18 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockEngineConfig
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 private fun trackPayload() =
     ApiPayload.Track(
@@ -28,6 +33,66 @@ private fun trackPayload() =
     )
 
 class TransportTest {
+    @Test
+    fun `deprecated environments are omitted from track identify alias and raw batches`() {
+        val bodies = mutableListOf<String>()
+        val engine =
+            MockEngine { request ->
+                bodies += (request.body as TextContent).text
+                respond("", HttpStatusCode.OK, headersOf())
+            }
+        val transport =
+            Transport(
+                "environment-bound-key",
+                "https://api.example.com",
+                kotlinx.coroutines.Dispatchers.Unconfined,
+                1.seconds,
+                0,
+                engine,
+            )
+        try {
+            runBlocking {
+                transport.post(trackPayload())
+                transport.post(
+                    ApiPayload.Identify(
+                        IdentifyPayload(
+                            Instant.parse("2024-01-01T00:00:00Z"),
+                            "injected",
+                            "device",
+                            "user",
+                            null,
+                            buildJsonObject {},
+                        ),
+                    ),
+                )
+                transport.post(
+                    ApiPayload.Alias(
+                        AliasPayload(
+                            Instant.parse("2024-01-01T00:00:00Z"),
+                            "injected",
+                            "device",
+                            "user",
+                            null,
+                            "other",
+                        ),
+                    ),
+                )
+                transport.postBatch(listOf(trackPayload(), trackPayload()))
+            }
+            bodies.forEach { body ->
+                val elements =
+                    if (body.startsWith("[")) {
+                        Json.parseToJsonElement(body).jsonArray
+                    } else {
+                        listOf(Json.parseToJsonElement(body))
+                    }
+                elements.forEach { assertEquals(null, it.jsonObject["environment"]) }
+            }
+        } finally {
+            transport.close()
+        }
+    }
+
     @Test
     fun `successful POST returns without error`() {
         val engine =

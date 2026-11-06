@@ -44,5 +44,10 @@ internal val RESERVED_USER_IDS_CASE_SENSITIVE: Set<String> =
 
 internal fun buildStorageKeyPrefix(
     apiKey: String,
+    @Suppress("UNUSED_PARAMETER") environment: String = "production",
+): String = "atbl.v2$STORAGE_KEY_SEPARATOR$apiKey"
+
+internal fun buildLegacyStorageKeyPrefix(
+    apiKey: String,
     environment: String,
 ): String = "$STORAGE_KEY_PREFIX$STORAGE_KEY_SEPARATOR$apiKey$STORAGE_KEY_SEPARATOR$environment"

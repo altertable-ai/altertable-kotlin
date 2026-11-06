@@ -32,7 +32,6 @@ import ai.altertable.sdk.Altertable
 // Initialize the singleton client using DSL
 Altertable.setup {
     apiKey = "your-api-key"
-    environment = "production"
 }
 
 // Track an event
@@ -54,7 +53,6 @@ class MyApplication : Application() {
         
         AltertableAndroid.setup(this) {
             apiKey = "your-api-key"
-            environment = "production"
         }
     }
 }
@@ -84,7 +82,6 @@ import ai.altertable.sdk.Altertable
 
 Altertable.setup {
     apiKey = "your-api-key"
-    environment = "production"
     debug = true
     
     network {
@@ -120,12 +117,11 @@ client?.track("Event")
 
 #### `Altertable.create { }`
 
-Creates a new non-singleton client instance. Use this for multi-environment setups, testing, or when embedding the SDK in a library.
+Creates a new non-singleton client instance. Use this for multiple API keys, testing, or when embedding the SDK in a library.
 
 ```kotlin
 val testClient = Altertable.create {
     apiKey = "test-key"
-    environment = "test"
 }
 ```
 
@@ -353,7 +349,6 @@ class MyApplication : Application() {
         
         AltertableAndroid.setup(this) {
             apiKey = "your-api-key"
-            environment = "production"
             debug = BuildConfig.DEBUG
             
             tracking {
@@ -530,8 +525,8 @@ Initialize with an `AltertableConfig` object or use the DSL builder. All configu
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `mode` | `TrackingMode` | `PRODUCT` | `PRODUCT` or `AUDIENCE`. Fixed for the client's lifetime. |
-| `apiKey` | `String` | (Required) | Your project API key. |
-| `environment` | `String` | `"production"` | Environment name (e.g., "production", "staging"). Ignored in audience mode. |
+| `apiKey` | `String` | (Required) | Your environment-bound Product Analytics API key. |
+| `environment` | `String` | `"production"` | Deprecated and ignored; the API key selects the environment. Still used once to migrate state stored by earlier versions. |
 | `release` | `String?` | `null` | The release version of your app. |
 | `debug` | `Boolean` | `false` | Enables verbose logging. |
 | `dispatcher` | `CoroutineDispatcher` | `Dispatchers.IO` | Coroutine dispatcher for async operations. |

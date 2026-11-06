@@ -64,7 +64,7 @@ class IntegrationTest {
         }
 
     @Test
-    fun `test invalid environment response is stable`() =
+    fun `test deprecated environment does not select a missing destination`() =
         runBlocking {
             val config =
                 AltertableConfig(
@@ -83,8 +83,8 @@ class IntegrationTest {
                         client.errors.first { it is AltertableError.Api } as? AltertableError.Api
                     }
                 assertTrue(
-                    apiError == null || apiError.status == 400 || apiError.status == 422,
-                    "Expected null or 400/422 for invalid environment, got ${apiError?.status}",
+                    apiError == null,
+                    "Deprecated environment must be omitted; got ${apiError?.status}",
                 )
             } finally {
                 client.close()
