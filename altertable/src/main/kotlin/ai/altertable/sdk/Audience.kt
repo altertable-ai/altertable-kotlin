@@ -20,7 +20,6 @@ internal fun prepareAudienceEvent(payload: TrackPayload): TrackPayload {
     properties.remove(ContextProperties.VIEWPORT)
     return payload.copy(
         mode = "audience",
-        environment = null,
         deviceId = null,
         distinctId = null,
         anonymousId = null,

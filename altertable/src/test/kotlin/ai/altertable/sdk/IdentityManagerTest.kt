@@ -14,7 +14,7 @@ class IdentityManagerTest {
     fun testIdentifyAndReset() =
         runBlocking {
             val storage = InMemoryStorage()
-            val manager = IdentityManager(storage, "test-api-key", "test-env")
+            val manager = IdentityManager(storage, "test-api-key")
             manager.initialize()
 
             val initialDistinctId = manager.distinctId
@@ -37,7 +37,7 @@ class IdentityManagerTest {
     fun testReservedIds() =
         runBlocking {
             val storage = InMemoryStorage()
-            val manager = IdentityManager(storage, "test-api-key", "test-env")
+            val manager = IdentityManager(storage, "test-api-key")
             manager.initialize()
 
             val initialDistinctId = manager.distinctId

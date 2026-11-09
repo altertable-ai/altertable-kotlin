@@ -9,7 +9,6 @@ class AltertableExampleApp : Application() {
 
         AltertableAndroid.setup(this) {
             apiKey = BuildConfig.ALTERTABLE_API_KEY
-            environment = "production"
             debug = true
         }
     }

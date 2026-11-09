@@ -104,19 +104,18 @@ internal class Transport(
 
     @Suppress("ThrowsCount")
     internal suspend fun post(payload: ApiPayload) {
-        val wirePayload = payload.withoutEnvironment()
         retryWithBackoff(maxRetries) { attempt ->
             try {
                 val response =
                     withContext(dispatcher) {
-                        client.post("$baseUrl${wirePayload.endpoint}") {
+                        client.post("$baseUrl${payload.endpoint}") {
                             header("X-API-Key", apiKey)
                             contentType(ContentType.Application.Json)
                             setBody(
-                                when (wirePayload) {
-                                    is ApiPayload.Track -> wirePayload.payload as Any
-                                    is ApiPayload.Identify -> wirePayload.payload as Any
-                                    is ApiPayload.Alias -> wirePayload.payload as Any
+                                when (payload) {
+                                    is ApiPayload.Track -> payload.payload as Any
+                                    is ApiPayload.Identify -> payload.payload as Any
+                                    is ApiPayload.Alias -> payload.payload as Any
                                 },
                             )
                         }
@@ -137,12 +136,11 @@ internal class Transport(
         if (payloads.isEmpty()) {
             return
         }
-        val wirePayloads = payloads.map(ApiPayload::withoutEnvironment)
-        val endpoint = wirePayloads.first().endpoint
-        require(wirePayloads.all { it.endpoint == endpoint }) {
+        val endpoint = payloads.first().endpoint
+        require(payloads.all { it.endpoint == endpoint }) {
             "postBatch requires payloads for a single endpoint"
         }
-        val jsonBody = encodePayloadsAsJsonArray(wirePayloads)
+        val jsonBody = encodePayloadsAsJsonArray(payloads)
         retryWithBackoff(maxRetries) {
             try {
                 val response =

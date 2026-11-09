@@ -8,12 +8,11 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class, AltertableInternal::class)
 internal class IdentityManager(
     private val storage: Storage,
-    private val apiKey: String,
-    private val environment: String,
+    apiKey: String,
 ) {
     private val mutex = Mutex()
-    private val storageKeyPrefix = buildStorageKeyPrefix(apiKey, environment)
-    private val deviceIdKey = "$storageKeyPrefix.device_id"
+    private val storageKeyPrefix = buildStorageKeyPrefix(apiKey)
+    private val deviceIdKey = "$storageKeyPrefix$STORAGE_KEY_SEPARATOR$STORAGE_KEY_DEVICE_ID"
     private val distinctIdKey = "$storageKeyPrefix.distinct_id"
     private val anonymousIdKey = "$storageKeyPrefix.anonymous_id"
 

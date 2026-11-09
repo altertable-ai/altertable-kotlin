@@ -9,12 +9,11 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class, AltertableInternal::class)
 internal class SessionManager(
     private val storage: Storage,
-    private val apiKey: String,
-    private val environment: String,
+    apiKey: String,
     private val clock: Clock = Clock.System,
 ) {
     private val mutex = Mutex()
-    private val storageKeyPrefix = buildStorageKeyPrefix(apiKey, environment)
+    private val storageKeyPrefix = buildStorageKeyPrefix(apiKey)
     private val sessionIdKey = "$storageKeyPrefix.session_id"
     private val lastEventAtKey = "$storageKeyPrefix.last_event_at"
 
