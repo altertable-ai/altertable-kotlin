@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- Add lifecycle-fixed audience mode for Kotlin and Android with identity-free payloads, in-memory state and queues, reduced context, and sanitization after event hooks.
+- Add `TrackingMode.AUDIENCE` for identity-free, memory-only audience measurement.
 
 ### Fixed
-- Honor event hooks returning null and prevent explicit flushes from sending events while consent is pending.
+- Drop events when a `beforeSend` hook returns null.
+- Do not send events on `flush()` while consent is not granted.
 
 ## [0.1.0] - 2026-03-10
 

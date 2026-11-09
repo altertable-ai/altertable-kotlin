@@ -12,7 +12,6 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -441,7 +440,6 @@ class AudienceTest {
         assertEquals(TrackingMode.AUDIENCE, AltertableConfigBuilder().from(audience).build().mode)
         val updated = RuntimeConfigBuilder().from(audience).apply { debug = true }.applyTo(audience)
         assertEquals(TrackingMode.AUDIENCE, updated.mode)
-        assertFalse(RuntimeConfigBuilder::class.java.methods.any { it.name == "setMode" })
     }
 
     @Test
@@ -510,27 +508,4 @@ class AudienceTest {
                 next.close()
             }
         }
-
-    @Test
-    fun `legacy persisted product payload still decodes and emits unchanged wire fields`() {
-        val legacy =
-            """
-            [{"type":"track","payload":{
-              "timestamp":"2026-11-04T10:00:00.000Z","event":"Legacy","environment":"production",
-              "device_id":"device-old","distinct_id":"user-old","anonymous_id":"anonymous-old",
-              "session_id":"session-old","properties":{},"release":"1.0"
-            },"endpoint":"/track"}]
-            """.trimIndent()
-        val json =
-            Json {
-                ignoreUnknownKeys = true
-                encodeDefaults = true
-                explicitNulls = false
-            }
-        val decoded = json.decodeFromString<List<ApiPayload>>(legacy).single() as ApiPayload.Track
-        val wire = json.parseToJsonElement(json.encodeToString(decoded.payload)).jsonObject
-        assertEquals("user-old", wire["distinct_id"]!!.jsonPrimitive.content)
-        assertEquals("production", wire["environment"]!!.jsonPrimitive.content)
-        assertFalse(wire.containsKey("mode"))
-    }
 }

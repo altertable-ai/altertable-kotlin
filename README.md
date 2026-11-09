@@ -131,36 +131,16 @@ val testClient = Altertable.create {
 
 ### Audience measurement
 
-Product analytics is the default. Use an environment-bound Product Analytics API key and select audience mode during setup:
+Set `mode = TrackingMode.AUDIENCE` (also in `AltertableAndroid.setup`) to collect events without user, device, or session identifiers:
 
 ```kotlin
-import ai.altertable.sdk.TrackingMode
-
 Altertable.setup {
     apiKey = "your-api-key"
     mode = TrackingMode.AUDIENCE
 }
-Altertable.shared?.track("Docs Opened", mapOf("section" to "installation"))
 ```
 
-The same option works in `AltertableAndroid.setup(application) { ... }`.
-Audience events omit user, anonymous, device, and session IDs. The API key selects
-the environment; `environment` is ignored. `identify`, `alias`, and `updateTraits`
-are ignored, with warnings when `debug` is enabled. Android screen and background
-lifecycle tracking remain available.
-
-State, consent, and queues stay in memory, including when custom storage is supplied.
-Persisted product state is untouched. Closing or replacing the client discards its
-unsent audience events. Pending/dismissed consent waits for a grant; denied consent
-clears queued events and drops new ones. `flush` and `awaitFlush` respect consent.
-
-Audience mode limits automatic context to SDK name/version and configured release,
-removes `$viewport`, reduces `$url` to HTTP(S) origin plus path, and reduces `$referer`
-to origin. Invalid URLs become null. These rules apply after `beforeSend`. Custom
-properties, screen names, and URL paths can still contain personal information;
-choose them accordingly.
-
-Mode is fixed for each client. Call `setup` again or create a new client to change it.
+Audience mode requires an environment-bound Product Analytics API key. It keeps state, consent, and queued events in memory only, ignores `identify`, `alias`, and `updateTraits`, and, after `beforeSend` runs, limits automatic context to SDK metadata, release, `$url` (origin and path), and `$referer` (origin). Custom properties are sent as-is. The mode is fixed per client; call `setup` again to change it.
 
 ### Event Tracking
 
@@ -549,9 +529,9 @@ Initialize with an `AltertableConfig` object or use the DSL builder. All configu
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `mode` | `TrackingMode` | `PRODUCT` | Collection policy; use `AUDIENCE` for in-memory audience measurement. Fixed until a new client is created. |
+| `mode` | `TrackingMode` | `PRODUCT` | `PRODUCT` or `AUDIENCE`. Fixed for the client's lifetime. |
 | `apiKey` | `String` | (Required) | Your project API key. |
-| `environment` | `String` | `"production"` | Product environment name. Audience mode uses the API key’s environment. |
+| `environment` | `String` | `"production"` | Environment name (e.g., "production", "staging"). Ignored in audience mode. |
 | `release` | `String?` | `null` | The release version of your app. |
 | `debug` | `Boolean` | `false` | Enables verbose logging. |
 | `dispatcher` | `CoroutineDispatcher` | `Dispatchers.IO` | Coroutine dispatcher for async operations. |

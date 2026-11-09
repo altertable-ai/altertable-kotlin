@@ -430,7 +430,7 @@ internal class AltertableClient private constructor(
                 TrackPayload(
                     timestamp = Clock.System.now(),
                     event = event.trim(),
-                    environment = if (audience) null else currentConfig.environment,
+                    environment = currentConfig.environment,
                     deviceId = if (audience) null else identityManager.deviceId,
                     distinctId = if (audience) null else identityManager.distinctId,
                     anonymousId = if (audience) null else identityManager.anonymousId,
