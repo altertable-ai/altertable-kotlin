@@ -8,7 +8,9 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.ObserverModifierNode
 import androidx.compose.ui.node.currentValueOf
+import androidx.compose.ui.node.observeReads
 
 /**
  * CompositionLocal for the Altertable client.
@@ -103,17 +105,24 @@ private data class ScreenViewElement(
 private class ScreenViewNode(
     var name: String,
     var properties: Map<String, Any>,
-) : Modifier.Node(), CompositionLocalConsumerModifierNode {
-    private var tracked = false
+) : Modifier.Node(), CompositionLocalConsumerModifierNode, ObserverModifierNode {
+    private var client: Altertable? = null
 
     override fun onAttach() {
-        if (!tracked) {
-            tracked = true
-            currentValueOf(LocalAltertable).screen(name, properties)
+        onObservedReadsChanged()
+    }
+
+    override fun onObservedReadsChanged() {
+        observeReads {
+            val updatedClient = currentValueOf(LocalAltertable)
+            if (updatedClient !== client) {
+                client = updatedClient
+                updatedClient.screen(name, properties)
+            }
         }
     }
 
     override fun onDetach() {
-        tracked = false
+        client = null
     }
 }
