@@ -11,10 +11,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.test.junit4.createComposeRule
-import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,48 +30,47 @@ class ComposeScreenViewTest {
 
     @Test
     fun `screenView tracks once per provided client and not on recomposition`() {
-        runBlocking {
-            val server = MockWebServer()
-            server.enqueue(MockResponse().setResponseCode(200))
-            server.enqueue(MockResponse().setResponseCode(200))
-            server.start()
-            val first = createClient(server)
-            val second = createClient(server)
-            var client by mutableStateOf<Altertable>(first)
-            var recompositions by mutableIntStateOf(0)
-            try {
-                composeRule.setContent {
-                    recompositions
-                    ProvideAltertable(client) {
-                        Layout(
-                            content = {},
-                            modifier = Modifier.screenView("Home"),
-                        ) { _, constraints ->
-                            layout(constraints.minWidth, constraints.minHeight) {}
-                        }
+        val server = MockWebServer()
+        server.enqueue(MockResponse().setResponseCode(200))
+        server.enqueue(MockResponse().setResponseCode(200))
+        server.start()
+        val first = createClient(server)
+        val second = createClient(server)
+        var client by mutableStateOf<Altertable>(first)
+        var recompositions by mutableIntStateOf(0)
+        try {
+            composeRule.setContent {
+                recompositions
+                ProvideAltertable(client) {
+                    Layout(
+                        content = {},
+                        modifier = Modifier.screenView("Home"),
+                    ) { _, constraints ->
+                        layout(constraints.minWidth, constraints.minHeight) {}
                     }
                 }
-                composeRule.waitForIdle()
-                first.awaitFlush()
-                assertEquals(1, server.requestCount)
-
-                composeRule.runOnIdle { client = second }
-                composeRule.waitForIdle()
-                second.awaitFlush()
-                assertEquals(2, server.requestCount)
-
-                composeRule.runOnIdle { recompositions++ }
-                composeRule.waitForIdle()
-                second.awaitFlush()
-                assertEquals(2, server.requestCount)
-                requireNotNull(server.takeRequest(5, TimeUnit.SECONDS))
-                requireNotNull(server.takeRequest(5, TimeUnit.SECONDS))
-            } finally {
-                first.close()
-                second.close()
-                server.shutdown()
             }
+            composeRule.waitForIdle()
+            // Delivery is asynchronous: wait for each request rather than racing awaitFlush().
+            assertScreenRequest(server)
+
+            composeRule.runOnIdle { client = second }
+            composeRule.waitForIdle()
+            assertScreenRequest(server)
+
+            composeRule.runOnIdle { recompositions++ }
+            composeRule.waitForIdle()
+            assertNull(server.takeRequest(500, TimeUnit.MILLISECONDS))
+        } finally {
+            first.close()
+            second.close()
+            server.shutdown()
         }
+    }
+
+    private fun assertScreenRequest(server: MockWebServer) {
+        val request = requireNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+        assertTrue(request.body.readUtf8().contains("\"Home\""))
     }
 
     private fun createClient(server: MockWebServer): Altertable =
