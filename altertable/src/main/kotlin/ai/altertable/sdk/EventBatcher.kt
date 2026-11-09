@@ -99,12 +99,16 @@ internal class EventBatcher(
         )
     }
 
-    suspend fun clear() {
+    suspend fun clear(cancelInFlight: Boolean = false) {
         bufferMutex.withLock {
             bufferGeneration++
             trackBuffer.clear()
             identifyBuffer.clear()
             aliasBuffer.clear()
+        }
+        if (cancelInFlight) {
+            synchronized(inFlightOther) { inFlightOther.toList() }.forEach { it.cancel() }
+            synchronized(inFlightTimer) { inFlightTimer.toList() }.forEach { it.cancel() }
         }
     }
 

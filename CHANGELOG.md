@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Add `TrackingMode.AUDIENCE` for identity-free, memory-only audience measurement.
+
+### Fixed
+- Drop events when a `beforeSend` hook returns null.
+- Do not send events on `flush()` while consent is not granted.
+
 ## [0.1.0] - 2026-03-10
 
 ### Added

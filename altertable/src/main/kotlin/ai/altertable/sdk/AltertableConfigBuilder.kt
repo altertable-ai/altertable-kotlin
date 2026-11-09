@@ -89,7 +89,7 @@ public class TrackingConfigBuilder {
  * - Logger instance
  * - Event interceptors (beforeSend)
  *
- * Changing `apiKey`, `environment`, `dispatcher`, or `network` settings requires
+ * Changing `mode`, `apiKey`, `environment`, `dispatcher`, or `network` settings requires
  * creating a new client instance.
  */
 @AltertableDsl
@@ -108,6 +108,7 @@ public class RuntimeConfigBuilder {
         AltertableConfig(
             apiKey = config.apiKey,
             environment = config.environment,
+            mode = config.mode,
             network = config.network,
             tracking = trackingBuilder.build(),
             release = config.release,
@@ -129,6 +130,7 @@ public class RuntimeConfigBuilder {
 
 @AltertableDsl
 public class AltertableConfigBuilder {
+    public var mode: TrackingMode = TrackingMode.PRODUCT
     public var apiKey: String = ""
     public var environment: String = "production"
     public var release: String? = null
@@ -153,6 +155,7 @@ public class AltertableConfigBuilder {
     public fun build(): AltertableConfig =
         AltertableConfig(
             apiKey = apiKey,
+            mode = mode,
             environment = environment,
             network = networkBuilder.build(),
             tracking = trackingBuilder.build(),
@@ -170,6 +173,7 @@ public class AltertableConfigBuilder {
     @AltertableInternal
     public fun from(config: AltertableConfig): AltertableConfigBuilder {
         apiKey = config.apiKey
+        mode = config.mode
         environment = config.environment
         release = config.release
         debug = config.debug

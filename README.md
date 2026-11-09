@@ -129,6 +129,19 @@ val testClient = Altertable.create {
 }
 ```
 
+### Audience measurement
+
+Set `mode = TrackingMode.AUDIENCE` (also in `AltertableAndroid.setup`) to collect events without user, device, or session identifiers:
+
+```kotlin
+Altertable.setup {
+    apiKey = "your-api-key"
+    mode = TrackingMode.AUDIENCE
+}
+```
+
+Audience mode requires an environment-bound Product Analytics API key. It keeps state, consent, and queued events in memory only, ignores `identify`, `alias`, and `updateTraits`, and, after `beforeSend` runs, limits automatic context to SDK metadata, release, `$url` (origin and path), and `$referer` (origin). Custom properties are sent as-is. The mode is fixed per client; call `setup` again to change it.
+
 ### Event Tracking
 
 #### `track(event: String, properties: Map<String, Any> = emptyMap())`
@@ -516,8 +529,9 @@ Initialize with an `AltertableConfig` object or use the DSL builder. All configu
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
+| `mode` | `TrackingMode` | `PRODUCT` | `PRODUCT` or `AUDIENCE`. Fixed for the client's lifetime. |
 | `apiKey` | `String` | (Required) | Your project API key. |
-| `environment` | `String` | `"production"` | Environment name (e.g., "production", "staging"). |
+| `environment` | `String` | `"production"` | Environment name (e.g., "production", "staging"). Ignored in audience mode. |
 | `release` | `String?` | `null` | The release version of your app. |
 | `debug` | `Boolean` | `false` | Enables verbose logging. |
 | `dispatcher` | `CoroutineDispatcher` | `Dispatchers.IO` | Coroutine dispatcher for async operations. |

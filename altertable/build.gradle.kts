@@ -23,6 +23,7 @@ kotlin {
 
 spotless {
     kotlin {
+        target("src/**/*.kt")
         ktlint()
         trimTrailingWhitespace()
         endWithNewline()

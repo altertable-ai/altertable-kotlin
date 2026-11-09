@@ -53,7 +53,15 @@ internal class AltertableClient private constructor(
             maxBatchSize = initialConfig.tracking.maxBatchSize,
             send = { _, payloads ->
                 try {
-                    transport.postBatch(payloads)
+                    if (configState.value.mode == TrackingMode.AUDIENCE &&
+                        configState.value.tracking.consent != TrackingConsent.GRANTED
+                    ) {
+                        if (configState.value.tracking.consent != TrackingConsent.DENIED) {
+                            for (payload in payloads) eventQueue.enqueue(payload)
+                        }
+                    } else {
+                        transport.postBatch(payloads)
+                    }
                 } catch (e: AltertableException) {
                     errorsFlow.emit(e.error)
                     if (isRetryableHttpDeliveryError(e.error)) {
@@ -76,8 +84,10 @@ internal class AltertableClient private constructor(
         }
         // Initialize managers and restore consent asynchronously
         scope.launch {
-            identityManager.initialize()
-            sessionManager.initialize()
+            if (initialConfig.mode == TrackingMode.PRODUCT) {
+                identityManager.initialize()
+                sessionManager.initialize()
+            }
             eventQueue.initialize()
             // Restore consent from storage and update config
             val restoredConfig = restoreConsentFromStorage(configState.value, storage)
@@ -107,7 +117,7 @@ internal class AltertableClient private constructor(
         httpClientEngine: HttpClientEngine? = null,
     ) : this(
         initialConfig = config,
-        storage = storage,
+        storage = if (config.mode == TrackingMode.AUDIENCE) InMemoryStorage() else storage,
         contextProvider = contextProvider,
         identityManager = IdentityManager(storage, config.apiKey, config.environment),
         sessionManager = SessionManager(storage, config.apiKey, config.environment),
@@ -115,10 +125,11 @@ internal class AltertableClient private constructor(
             EventQueue(
                 maxSize = config.tracking.maxQueueSize,
                 queueStorage =
-                    QueueStorage(
-                        storage,
-                        buildStorageKeyPrefix(config.apiKey, config.environment),
-                    ),
+                    if (config.mode == TrackingMode.PRODUCT) {
+                        QueueStorage(storage, buildStorageKeyPrefix(config.apiKey, config.environment))
+                    } else {
+                        null
+                    },
             ),
         transport =
             Transport(
@@ -140,6 +151,14 @@ internal class AltertableClient private constructor(
             currentConfig.environment,
         )}${STORAGE_KEY_SEPARATOR}${STORAGE_KEY_TRACKING_CONSENT}"
         storage[key] = consent.name.lowercase()
+    }
+
+    private fun rejectAudienceIdentityCall(): Boolean {
+        if (configState.value.mode != TrackingMode.AUDIENCE) return false
+        if (configState.value.debug) {
+            log(LogLevel.WARN, "identify(), alias(), and updateTraits() are ignored in audience mode.")
+        }
+        return true
     }
 
     private fun log(
@@ -218,6 +237,7 @@ internal class AltertableClient private constructor(
         userId: String,
         traits: Map<String, Any>,
     ) {
+        if (rejectAudienceIdentityCall()) return
         validateUserId(userId).onFailure { exception ->
             val altertableError =
                 when (exception) {
@@ -264,6 +284,7 @@ internal class AltertableClient private constructor(
      * Updates user traits for the current identified user.
      */
     override fun updateTraits(traits: Map<String, Any>) {
+        if (rejectAudienceIdentityCall()) return
         if (identityManager.anonymousId == null) {
             val error = AltertableError.Validation("User must be identified with identify() before updating traits.")
             log(LogLevel.ERROR, error.message)
@@ -301,6 +322,7 @@ internal class AltertableClient private constructor(
      * @param newUserId The new user identifier to associate.
      */
     override fun alias(newUserId: String) {
+        if (rejectAudienceIdentityCall()) return
         validateUserId(newUserId).onFailure { exception ->
             val altertableError =
                 when (exception) {
@@ -336,8 +358,10 @@ internal class AltertableClient private constructor(
         resetTrackingConsent: Boolean,
     ) {
         scope.launch {
-            identityManager.reset(resetDeviceId)
-            sessionManager.renewSession()
+            if (configState.value.mode == TrackingMode.PRODUCT) {
+                identityManager.reset(resetDeviceId)
+                sessionManager.renewSession()
+            }
             if (resetTrackingConsent) {
                 val currentConfig = configState.value
                 val newConfig =
@@ -353,7 +377,7 @@ internal class AltertableClient private constructor(
                 persistConsent(TrackingConsent.GRANTED)
             }
             eventQueue.clear()
-            eventBatcher.clear()
+            eventBatcher.clear(cancelInFlight = configState.value.mode == TrackingMode.AUDIENCE)
             if (resetTrackingConsent) {
                 eventBatcher.start()
             }
@@ -385,8 +409,17 @@ internal class AltertableClient private constructor(
         }
         scope.launch {
             val currentConfig = configState.value
-            val sessionId = sessionManager.getSessionIdAndTouch()
-            val systemProps = contextProvider.getSystemProperties().toMutableMap()
+            val audience = currentConfig.mode == TrackingMode.AUDIENCE
+            val sessionId = if (audience) null else sessionManager.getSessionIdAndTouch()
+            val systemProps =
+                if (audience) {
+                    mutableMapOf<String, Any>(
+                        ContextProperties.LIB to ContextProperties.LIBRARY_NAME,
+                        ContextProperties.LIB_VERSION to ContextProperties.LIBRARY_VERSION,
+                    )
+                } else {
+                    contextProvider.getSystemProperties().toMutableMap()
+                }
             currentConfig.release?.let { systemProps[ContextProperties.RELEASE] = it }
             val currentSuperProperties =
                 superPropertiesMutex.withLock {
@@ -398,9 +431,9 @@ internal class AltertableClient private constructor(
                     timestamp = Clock.System.now(),
                     event = event.trim(),
                     environment = currentConfig.environment,
-                    deviceId = identityManager.deviceId,
-                    distinctId = identityManager.distinctId,
-                    anonymousId = identityManager.anonymousId,
+                    deviceId = if (audience) null else identityManager.deviceId,
+                    distinctId = if (audience) null else identityManager.distinctId,
+                    anonymousId = if (audience) null else identityManager.anonymousId,
                     sessionId = sessionId,
                     properties = propertiesToJsonObject(mergedProperties),
                     release = currentConfig.release,
@@ -447,16 +480,24 @@ internal class AltertableClient private constructor(
 
         // Apply interceptors
         for (interceptor in currentConfig.beforeSend) {
-            currentEvent = currentEvent?.let { interceptor(it) } ?: break
+            currentEvent = currentEvent?.let { interceptor(it) }
+            if (currentEvent == null) break
         }
 
         // Convert back to ApiPayload, dropping if null
-        val finalPayload = currentEvent?.let { payload.applyEvent(it) } ?: return
+        val transformed = currentEvent?.let { payload.applyEvent(it) } ?: return
+        val finalPayload =
+            if (currentConfig.mode == TrackingMode.AUDIENCE) {
+                val track = transformed as? ApiPayload.Track ?: return
+                track.copy(payload = prepareAudienceEvent(track.payload))
+            } else {
+                transformed
+            }
 
         scope.launch {
             if (clearQueueFirst) {
                 eventQueue.clear()
-                eventBatcher.clear()
+                eventBatcher.clear(cancelInFlight = configState.value.mode == TrackingMode.AUDIENCE)
             }
             val configForConsent = configState.value
             when (configForConsent.tracking.consent) {
@@ -485,6 +526,7 @@ internal class AltertableClient private constructor(
 
     /** Drains the persisted consent queue and all in-memory outbound batches. */
     private suspend fun flushAllPending() {
+        if (configState.value.tracking.consent != TrackingConsent.GRANTED) return
         val events = eventQueue.flush()
         for (evt in events) {
             eventBatcher.add(evt)
@@ -505,12 +547,12 @@ internal class AltertableClient private constructor(
             }
             TrackingConsent.DENIED -> {
                 eventQueue.clear()
-                eventBatcher.clear()
+                eventBatcher.clear(cancelInFlight = configState.value.mode == TrackingMode.AUDIENCE)
                 eventBatcher.stop()
             }
             TrackingConsent.PENDING, TrackingConsent.DISMISSED -> {
                 if (previous == TrackingConsent.GRANTED) {
-                    eventBatcher.flush()
+                    if (configState.value.mode == TrackingMode.PRODUCT) eventBatcher.flush()
                     eventBatcher.stop()
                 }
             }
