@@ -28,7 +28,6 @@ private fun trackPayload(eventName: String = "e"): ApiPayload.Track =
         TrackPayload(
             timestamp = Instant.parse("2024-01-01T00:00:00Z"),
             event = eventName,
-            environment = "test",
             deviceId = "d",
             distinctId = "u",
             anonymousId = null,

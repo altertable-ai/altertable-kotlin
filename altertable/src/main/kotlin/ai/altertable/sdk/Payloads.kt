@@ -17,7 +17,6 @@ import kotlinx.serialization.json.put
  *
  * @property timestamp ISO-8601 timestamp
  * @property event Event name
- * @property environment Environment name
  * @property deviceId Device identifier
  * @property distinctId User distinct ID
  * @property anonymousId Anonymous ID before identification
@@ -30,7 +29,6 @@ internal data class TrackPayload(
     @Serializable(with = InstantIso8601Serializer::class)
     val timestamp: Instant,
     val event: String,
-    val environment: String? = null,
     @SerialName("device_id") val deviceId: String? = null,
     @SerialName("distinct_id") val distinctId: String? = null,
     @SerialName("anonymous_id") val anonymousId: String? = null,
@@ -44,7 +42,6 @@ internal data class TrackPayload(
  * Payload for the /identify endpoint.
  *
  * @property timestamp ISO-8601 timestamp
- * @property environment Environment name
  * @property deviceId Device identifier
  * @property distinctId User distinct ID
  * @property anonymousId Previous anonymous ID
@@ -55,7 +52,6 @@ internal data class TrackPayload(
 internal data class IdentifyPayload(
     @Serializable(with = InstantIso8601Serializer::class)
     val timestamp: Instant,
-    val environment: String,
     @SerialName("device_id") val deviceId: String,
     @SerialName("distinct_id") val distinctId: String,
     @SerialName("anonymous_id") val anonymousId: String?,
@@ -67,7 +63,6 @@ internal data class IdentifyPayload(
  * Payload for the /alias endpoint.
  *
  * @property timestamp ISO-8601 timestamp
- * @property environment Environment name
  * @property deviceId Device identifier
  * @property distinctId Current distinct ID
  * @property anonymousId Anonymous ID if any
@@ -78,7 +73,6 @@ internal data class IdentifyPayload(
 internal data class AliasPayload(
     @Serializable(with = InstantIso8601Serializer::class)
     val timestamp: Instant,
-    val environment: String,
     @SerialName("device_id") val deviceId: String,
     @SerialName("distinct_id") val distinctId: String,
     @SerialName("anonymous_id") val anonymousId: String?,

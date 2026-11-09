@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Add `TrackingMode.AUDIENCE` for identity-free, memory-only audience measurement.
 
+### Changed
+- Deprecate `environment`; it is no longer sent. Use an environment-bound API key, and flush events sent with an unbound key before upgrading.
+
 ### Fixed
 - Drop events when a `beforeSend` hook returns null.
 - Do not send events on `flush()` while consent is not granted.

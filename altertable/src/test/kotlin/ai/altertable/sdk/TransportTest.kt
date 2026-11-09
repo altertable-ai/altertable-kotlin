@@ -17,7 +17,6 @@ private fun trackPayload() =
         TrackPayload(
             timestamp = Instant.parse("2024-01-01T00:00:00Z"),
             event = "test_event",
-            environment = "test",
             deviceId = "device-1",
             distinctId = "user-1",
             anonymousId = null,

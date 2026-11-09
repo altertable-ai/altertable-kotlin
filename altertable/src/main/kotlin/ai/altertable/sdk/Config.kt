@@ -127,7 +127,7 @@ public data class TrackingConfig(
  * Configuration for the Altertable SDK client.
  *
  * @param apiKey The Altertable API key.
- * @param environment The environment name (e.g., "production", "development").
+ * @param environment Deprecated and ignored. The API key determines the environment.
  * @param network Network configuration.
  * @param tracking Tracking configuration.
  * @param release The optional release version of the application.
@@ -141,6 +141,7 @@ public data class TrackingConfig(
 @Suppress("LongParameterList")
 public class AltertableConfig(
     public val apiKey: String,
+    @Deprecated("The environment is determined by your API key and this value is ignored.")
     public val environment: String = "production",
     public val network: NetworkConfig = NetworkConfig(),
     public val tracking: TrackingConfig = TrackingConfig(),

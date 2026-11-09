@@ -6,6 +6,7 @@ internal const val PREFIX_SESSION_ID = "session"
 internal const val PREFIX_ANONYMOUS_ID = "anonymous"
 internal const val PREFIX_DEVICE_ID = "device"
 internal const val STORAGE_KEY_QUEUE = "queue"
+internal const val STORAGE_KEY_DEVICE_ID = "device_id"
 internal const val STORAGE_KEY_TRACKING_CONSENT = "tracking_consent"
 internal const val SESSION_EXPIRATION_TIME_MS = 1_800_000L
 
@@ -42,7 +43,11 @@ internal val RESERVED_USER_IDS_CASE_SENSITIVE: Set<String> =
         "null",
     )
 
-internal fun buildStorageKeyPrefix(
+internal fun buildStorageKeyPrefix(apiKey: String): String =
+    "$STORAGE_KEY_PREFIX${STORAGE_KEY_SEPARATOR}v2$STORAGE_KEY_SEPARATOR$apiKey"
+
+/** Pre-v2 namespace, read only to migrate state selected by the deprecated environment option. */
+internal fun buildLegacyStorageKeyPrefix(
     apiKey: String,
     environment: String,
 ): String = "$STORAGE_KEY_PREFIX$STORAGE_KEY_SEPARATOR$apiKey$STORAGE_KEY_SEPARATOR$environment"

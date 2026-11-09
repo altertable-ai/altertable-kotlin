@@ -13,7 +13,7 @@ class SessionManagerTest {
     fun testSessionGenerationAndRenew() =
         runBlocking {
             val storage = InMemoryStorage()
-            val manager = SessionManager(storage, "test-api-key", "test-env")
+            val manager = SessionManager(storage, "test-api-key")
             manager.initialize()
 
             val initialSession = manager.sessionId

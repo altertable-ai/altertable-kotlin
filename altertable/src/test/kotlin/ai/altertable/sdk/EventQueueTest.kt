@@ -12,7 +12,6 @@ private fun trackPayload(eventSuffix: Int) =
         TrackPayload(
             timestamp = Instant.parse("2024-01-01T00:00:00Z"),
             event = "event_$eventSuffix",
-            environment = "test",
             deviceId = "device-1",
             distinctId = "user-1",
             anonymousId = null,
