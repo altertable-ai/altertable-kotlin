@@ -130,6 +130,8 @@ jobs:
           java-version: '21'
           distribution: temurin
       - name: Install Android release SDK
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
+        with:
+          packages: 'platforms;android-35 build-tools;35.0.0'
       - name: Verify signed publications with a temporary test key
         run: bash scripts/verify-release.sh
