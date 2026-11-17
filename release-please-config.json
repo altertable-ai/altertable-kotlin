@@ -1,8 +1,13 @@
 {
-    "release-type": "kotlin",
+    "release-type": "java",
+    "skip-snapshot": true,
+    "include-component-in-tag": false,
     "packages": {
         ".": {
-            "package-name": "altertable-kotlin"
+            "package-name": "altertable-kotlin",
+            "extra-files": [
+                { "type": "generic", "path": "gradle.properties" }
+            ]
         }
     }
 }

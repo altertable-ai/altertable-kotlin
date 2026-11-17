@@ -7,8 +7,7 @@ plugins {
     alias(libs.plugins.spotless)
     alias(libs.plugins.dokka)
     alias(libs.plugins.kover)
-    `maven-publish`
-    signing
+    alias(libs.plugins.maven.publish)
 }
 
 group = "ai.altertable.sdk"
@@ -87,6 +86,7 @@ val generateVersion =
     tasks.register("generateVersion") {
         val outputDir = layout.buildDirectory.dir("generated/version/kotlin")
         val sdkVersion = project.version.toString()
+        inputs.property("sdkVersion", sdkVersion)
         outputs.dir(outputDir)
         doLast {
             val packageDir = outputDir.get().asFile.resolve("ai/altertable/sdk")
@@ -103,23 +103,24 @@ val generateVersion =
 
 kotlin {
     sourceSets.main {
-        kotlin.srcDir(layout.buildDirectory.dir("generated/version/kotlin"))
+        kotlin.srcDir(generateVersion)
     }
-}
-
-tasks.named("compileKotlin") {
-    dependsOn(generateVersion)
 }
 
 java {
     withSourcesJar()
-    withJavadocJar()
 }
 
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
+            artifact(
+                tasks.register<Jar>("dokkaJavadocJar") {
+                    archiveClassifier.set("javadoc")
+                    from(tasks.named("dokkaGeneratePublicationHtml"))
+                },
+            )
             artifactId = "altertable-kotlin"
             pom {
                 name.set("Altertable Kotlin SDK")
@@ -146,23 +147,9 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-            credentials {
-                username = System.getenv("OSSRH_USERNAME")
-                password = System.getenv("OSSRH_PASSWORD")
-            }
-        }
-    }
 }
 
-signing {
-    val signingKeyId = System.getenv("SIGNING_KEY_ID")
-    val signingKey = System.getenv("SIGNING_KEY")
-    val signingPassword = System.getenv("SIGNING_PASSWORD")
-    useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-    sign(publishing.publications["mavenJava"])
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
 }
