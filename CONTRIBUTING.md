@@ -32,3 +32,7 @@ This project uses `detekt` for linting and `spotless` for formatting. Run `./gra
 - Update `CHANGELOG.md` under `[Unreleased]` (Release Please will handle this automatically)
 - Ensure CI passes before requesting review
 - When changing the public API, run `./gradlew updateLegacyAbi` to update binary compatibility reference
+
+## Releases
+
+See [RELEASING.md](RELEASING.md) for Central Portal setup, local publication verification, and the release approval flow.
